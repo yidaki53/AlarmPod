@@ -39,25 +39,20 @@ public final class PodcastAlarmScheduler {
             cancelPrefetch(context);
             return false;
         }
+        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+        if (alarmManager == null) {
+            return false;
+        }
 
         long triggerAtMillis = getNextTriggerAtMillis(
                 System.currentTimeMillis(),
                 PodcastAlarmPreferences.getHour(),
                 PodcastAlarmPreferences.getMinute());
 
-        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
-        if (alarmManager == null) {
-            return false;
-        }
-
         PendingIntent pendingIntent = getTriggerPendingIntent(context);
         cancelLegacyReceiverAlarm(context, alarmManager);
         alarmManager.cancel(pendingIntent);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
-        } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
-        }
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
 
         schedulePrefetch(context, triggerAtMillis);
         return true;
@@ -133,7 +128,8 @@ public final class PodcastAlarmScheduler {
                 .setInputData(refreshData)
                 .build();
 
-        OneTimeWorkRequest.Builder prefetchWorkBuilder = new OneTimeWorkRequest.Builder(PodcastAlarmPrefetchWorker.class)
+        OneTimeWorkRequest.Builder prefetchWorkBuilder =
+                new OneTimeWorkRequest.Builder(PodcastAlarmPrefetchWorker.class)
                 .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build());
         if (initialDelay == 0L) {
             prefetchWorkBuilder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST);
@@ -164,11 +160,7 @@ public final class PodcastAlarmScheduler {
                 System.currentTimeMillis(),
                 PodcastAlarmPreferences.getDownloadHour(),
                 PodcastAlarmPreferences.getDownloadMinute());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, downloadTriggerAtMillis, pendingIntent);
-        } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, downloadTriggerAtMillis, pendingIntent);
-        }
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, downloadTriggerAtMillis, pendingIntent);
     }
 
     private static void cancelPrefetch(@NonNull Context context) {
@@ -177,7 +169,13 @@ public final class PodcastAlarmScheduler {
 
     private static PendingIntent getTriggerPendingIntent(@NonNull Context context) {
         Intent intent = PodcastAlarmExecutionService.createTriggerIntent(context);
-        return PendingIntent.getForegroundService(
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            ? PendingIntent.getForegroundService(
+                context,
+                REQUEST_CODE_TRIGGER,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE)
+            : PendingIntent.getService(
                 context,
                 REQUEST_CODE_TRIGGER,
                 intent,
@@ -186,7 +184,13 @@ public final class PodcastAlarmScheduler {
 
     private static PendingIntent getDownloadTriggerPendingIntent(@NonNull Context context) {
         Intent intent = PodcastAlarmDownloadService.createTriggerIntent(context);
-        return PendingIntent.getForegroundService(
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            ? PendingIntent.getForegroundService(
+                context,
+                REQUEST_CODE_DOWNLOAD_TRIGGER,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE)
+            : PendingIntent.getService(
                 context,
                 REQUEST_CODE_DOWNLOAD_TRIGGER,
                 intent,

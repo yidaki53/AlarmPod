@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
@@ -56,7 +57,7 @@ public class PodcastAlarmDownloadService extends Service {
 
                 PodcastAlarmScheduler.enqueuePrefetchWork(getApplicationContext(), feedId, 0L);
             } finally {
-                stopForeground(STOP_FOREGROUND_REMOVE);
+                stopForegroundCompat();
                 stopSelf(startId);
             }
         }, "PodcastAlarmDownloadService");
@@ -72,5 +73,13 @@ public class PodcastAlarmDownloadService extends Service {
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setSilent(true)
                 .build();
+    }
+
+    private void stopForegroundCompat() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        } else {
+            stopForeground(true);
+        }
     }
 }

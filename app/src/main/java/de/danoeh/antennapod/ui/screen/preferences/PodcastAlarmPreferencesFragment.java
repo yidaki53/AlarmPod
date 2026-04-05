@@ -213,15 +213,15 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
             feedSelectionDisposable.dispose();
         }
         feedSelectionDisposable = Single.fromCallable(() -> {
-                    List<Feed> feeds = DBReader.getFeedList();
-                    List<Feed> result = new ArrayList<>();
-                    for (Feed feed : feeds) {
-                        if (feed.getState() == Feed.STATE_SUBSCRIBED) {
-                            result.add(feed);
-                        }
-                    }
-                    return result;
-                })
+            List<Feed> feeds = DBReader.getFeedList();
+            List<Feed> result = new ArrayList<>();
+            for (Feed feed : feeds) {
+                if (feed.getState() == Feed.STATE_SUBSCRIBED) {
+                    result.add(feed);
+                }
+            }
+            return result;
+        })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::showPodcastSelectionDialog,

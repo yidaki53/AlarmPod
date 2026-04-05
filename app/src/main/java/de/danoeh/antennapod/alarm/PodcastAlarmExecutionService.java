@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
@@ -79,7 +80,7 @@ public class PodcastAlarmExecutionService extends Service {
                 setLastStage("failed:" + e.getClass().getSimpleName());
                 throw e;
             } finally {
-                stopForeground(STOP_FOREGROUND_REMOVE);
+                stopForegroundCompat();
                 stopSelf(startId);
                 setLastStage("finished");
             }
@@ -116,5 +117,13 @@ public class PodcastAlarmExecutionService extends Service {
                 .edit()
                 .putString(PREF_LAST_STAGE, stage)
                 .apply();
+    }
+
+    private void stopForegroundCompat() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        } else {
+            stopForeground(true);
+        }
     }
 }
