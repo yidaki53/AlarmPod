@@ -19,6 +19,7 @@ applyTo: "app/src/main/java/de/danoeh/antennapod/alarm/**/*.java,app/src/main/ja
 - Use `AlarmManager` exact alarms for the trigger path and `WorkManager` for optional prefetch work.
 - `PodcastAlarmBootReceiver` restores the schedule after boot and package replacement.
 - `PodcastAlarmBootReceiver` should treat the received action as an input that needs validation and only reschedule when the protected-broadcast action matches the manifest contract.
+- Daily wall-clock alarms need a reschedule path for manual time changes and timezone changes; otherwise the stored exact trigger can drift away from the user-selected local time.
 - Existing enabled alarms should also be rescheduled on app startup so any trigger-path migration takes effect without waiting for reboot or manual reconfiguration.
 - On Android 12 and above, exact-alarm permission gating must remain part of the enable flow.
 - This app already has `minSdk 23`, so `setExactAndAllowWhileIdle(...)` is part of the supported sample space and does not need a pre-M compatibility branch.
