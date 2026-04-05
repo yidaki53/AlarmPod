@@ -38,6 +38,7 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.snackbar.Snackbar;
+import de.danoeh.antennapod.alarm.PodcastAlarmScheduler;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.event.EpisodeDownloadEvent;
 import de.danoeh.antennapod.event.FeedUpdateRunningEvent;
@@ -54,6 +55,7 @@ import de.danoeh.antennapod.playback.service.PlaybackController;
 import de.danoeh.antennapod.playback.service.PlaybackServiceInterface;
 import de.danoeh.antennapod.storage.databasemaintenanceservice.DatabaseMaintenanceWorker;
 import de.danoeh.antennapod.storage.importexport.AutomaticDatabaseExportWorker;
+import de.danoeh.antennapod.storage.preferences.PodcastAlarmPreferences;
 import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.TransitionEffect;
@@ -222,6 +224,9 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
         SynchronizationQueue.getInstance().syncIfNotSyncedRecently();
         AutomaticDatabaseExportWorker.enqueueIfNeeded(this, false);
         DatabaseMaintenanceWorker.enqueueIfNeeded(this);
+        if (PodcastAlarmPreferences.isEnabled()) {
+            PodcastAlarmScheduler.schedule(this);
+        }
 
         WorkManager.getInstance(this)
                 .getWorkInfosByTagLiveData(FeedUpdateManagerImpl.WORK_TAG_FEED_UPDATE)
