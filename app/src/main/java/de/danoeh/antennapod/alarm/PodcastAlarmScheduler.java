@@ -12,6 +12,7 @@ import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
 import java.util.Calendar;
@@ -23,6 +24,7 @@ import de.danoeh.antennapod.storage.preferences.PodcastAlarmPreferences;
 
 public final class PodcastAlarmScheduler {
     private static final int REQUEST_CODE_TRIGGER = 4001;
+    private static final int REQUEST_CODE_DOWNLOAD_TRIGGER = 4002;
     private static final String UNIQUE_WORK_PREFETCH = "podcastAlarmPrefetch";
 
     private PodcastAlarmScheduler() {
@@ -65,6 +67,7 @@ public final class PodcastAlarmScheduler {
         AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
         if (alarmManager != null) {
             alarmManager.cancel(getTriggerPendingIntent(context));
+            alarmManager.cancel(getDownloadTriggerPendingIntent(context));
             cancelLegacyReceiverAlarm(context, alarmManager);
         }
         cancelPrefetch(context);
@@ -102,25 +105,44 @@ public final class PodcastAlarmScheduler {
             return;
         }
 
+        if (PodcastAlarmPreferences.isPrefetchAtExactTime()) {
+            scheduleExactDownload(context);
+            return;
+        }
+
         long prefetchAtMillis = triggerAtMillis - TimeUnit.MINUTES.toMillis(PodcastAlarmPreferences.getPrefetchMinutes());
         long initialDelay = Math.max(0L, prefetchAtMillis - System.currentTimeMillis());
+
+        enqueuePrefetchWork(context, feedId, initialDelay);
+    }
+
+    static void enqueuePrefetchWork(@NonNull Context context, long feedId, long initialDelay) {
+        OneTimeWorkRequest.Builder refreshWorkBuilder = new OneTimeWorkRequest.Builder(FeedUpdateWorker.class)
+                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build());
+        if (initialDelay == 0L) {
+            refreshWorkBuilder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST);
+        }
 
         Data refreshData = new Data.Builder()
                 .putLong(FeedUpdateManagerImpl.EXTRA_FEED_ID, feedId)
                 .putBoolean(FeedUpdateManagerImpl.EXTRA_EVEN_ON_MOBILE, true)
                 .putBoolean(FeedUpdateManagerImpl.EXTRA_MANUAL, true)
                 .build();
-        OneTimeWorkRequest refreshWork = new OneTimeWorkRequest.Builder(FeedUpdateWorker.class)
-                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-                .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+        OneTimeWorkRequest refreshWork = refreshWorkBuilder
                 .setInputData(refreshData)
                 .build();
+
+        OneTimeWorkRequest.Builder prefetchWorkBuilder = new OneTimeWorkRequest.Builder(PodcastAlarmPrefetchWorker.class)
+                .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build());
+        if (initialDelay == 0L) {
+            prefetchWorkBuilder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST);
+        }
 
         Data prefetchData = new Data.Builder()
                 .putLong(PodcastAlarmPrefetchWorker.EXTRA_FEED_ID, feedId)
                 .build();
-        OneTimeWorkRequest prefetchWork = new OneTimeWorkRequest.Builder(PodcastAlarmPrefetchWorker.class)
-                .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+        OneTimeWorkRequest prefetchWork = prefetchWorkBuilder
                 .setInputData(prefetchData)
                 .build();
 
@@ -128,6 +150,25 @@ public final class PodcastAlarmScheduler {
                 .beginUniqueWork(UNIQUE_WORK_PREFETCH, ExistingWorkPolicy.REPLACE, refreshWork)
                 .then(prefetchWork)
                 .enqueue();
+    }
+
+    private static void scheduleExactDownload(@NonNull Context context) {
+        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+        if (alarmManager == null) {
+            return;
+        }
+
+        PendingIntent pendingIntent = getDownloadTriggerPendingIntent(context);
+        alarmManager.cancel(pendingIntent);
+        long downloadTriggerAtMillis = getNextTriggerAtMillis(
+                System.currentTimeMillis(),
+                PodcastAlarmPreferences.getDownloadHour(),
+                PodcastAlarmPreferences.getDownloadMinute());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, downloadTriggerAtMillis, pendingIntent);
+        } else {
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, downloadTriggerAtMillis, pendingIntent);
+        }
     }
 
     private static void cancelPrefetch(@NonNull Context context) {
@@ -139,6 +180,15 @@ public final class PodcastAlarmScheduler {
         return PendingIntent.getForegroundService(
                 context,
                 REQUEST_CODE_TRIGGER,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    private static PendingIntent getDownloadTriggerPendingIntent(@NonNull Context context) {
+        Intent intent = PodcastAlarmDownloadService.createTriggerIntent(context);
+        return PendingIntent.getForegroundService(
+                context,
+                REQUEST_CODE_DOWNLOAD_TRIGGER,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }

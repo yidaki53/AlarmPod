@@ -34,12 +34,14 @@ applyTo: "app/src/main/java/de/danoeh/antennapod/alarm/**/*.java,app/src/main/ja
 - The current implementation uses one unique WorkManager chain so later reschedules replace prior prefetch work.
 - Keep the prefetch path network-constrained.
 - Use exact wake-up alarms for anything that must happen at a precise user-selected time; WorkManager is best-effort and should only be used for lead-time prefetch.
+- When users choose an exact download clock time instead of a lead time, schedule a separate exact wake-up alarm that starts a silent foreground service and immediately enqueues the refresh-download work.
 
 ## UI wiring
 - The launcher preference belongs in playback preferences.
 - The dedicated screen is mapped in `PreferenceActivity` and indexed in `MainPreferencesFragment` so settings search can find it.
 - The exact-alarm permission preference should only be visible when the permission is actually needed.
 - On this device, the platform `TimePickerDialog` is more reliable than `MaterialTimePicker` for persisting the selected alarm hour correctly.
+- The automation UI supports two download strategies: lead time before playback, or a separate exact download time of day.
 
 ## Tests and validation
 - Focused unit coverage exists for episode resolution and next-trigger calculation in `app/src/test/java/de/danoeh/antennapod/alarm`.

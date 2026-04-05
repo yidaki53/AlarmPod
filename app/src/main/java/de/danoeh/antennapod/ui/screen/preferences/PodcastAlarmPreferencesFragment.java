@@ -38,8 +38,10 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener {
     private Preference selectedPodcastPreference;
     private Preference timePreference;
+    private Preference downloadTimePreference;
     private Preference exactAlarmPermissionPreference;
     private SwitchPreferenceCompat enabledPreference;
+    private ListPreference prefetchModePreference;
     private ListPreference prefetchMinutesPreference;
     private Disposable feedSelectionDisposable;
     private Disposable feedSummaryDisposable;
@@ -50,8 +52,10 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
 
         selectedPodcastPreference = requirePreference(PodcastAlarmPreferences.PREF_FEED_ID);
         timePreference = requirePreference("prefPodcastAlarmTime");
+        downloadTimePreference = requirePreference("prefPodcastAlarmDownloadTime");
         exactAlarmPermissionPreference = requirePreference("prefPodcastAlarmExactAlarmPermission");
         enabledPreference = requirePreference(PodcastAlarmPreferences.PREF_ENABLED);
+        prefetchModePreference = requirePreference(PodcastAlarmPreferences.PREF_PREFETCH_MODE);
         prefetchMinutesPreference = requirePreference(PodcastAlarmPreferences.PREF_PREFETCH_MINUTES);
 
         selectedPodcastPreference.setOnPreferenceClickListener(preference -> {
@@ -60,6 +64,10 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         });
         timePreference.setOnPreferenceClickListener(preference -> {
             openTimePicker();
+            return true;
+        });
+        downloadTimePreference.setOnPreferenceClickListener(preference -> {
+            openDownloadTimePicker();
             return true;
         });
         exactAlarmPermissionPreference.setOnPreferenceClickListener(preference -> {
@@ -81,6 +89,11 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
                 requestExactAlarmPermission();
                 return false;
             }
+            return true;
+        });
+        prefetchModePreference.setOnPreferenceChangeListener((preference, newValue) -> {
+            updatePrefetchModeSummary(String.valueOf(newValue));
+            updatePrefetchConfigurationVisibility(String.valueOf(newValue));
             return true;
         });
         prefetchMinutesPreference.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -126,8 +139,11 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
 
     private void updateSummaries() {
         updateTimeSummary();
+        updateDownloadTimeSummary();
         updateFeedSummary();
+        updatePrefetchModeSummary(prefetchModePreference.getValue());
         updatePrefetchSummary(prefetchMinutesPreference.getValue());
+        updatePrefetchConfigurationVisibility(prefetchModePreference.getValue());
         updatePermissionVisibility();
     }
 
@@ -138,6 +154,15 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         timePreference.setSummary(DateFormat.getTimeFormat(requireContext()).format(calendar.getTime()));
+    }
+
+    private void updateDownloadTimeSummary() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, PodcastAlarmPreferences.getDownloadHour());
+        calendar.set(Calendar.MINUTE, PodcastAlarmPreferences.getDownloadMinute());
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        downloadTimePreference.setSummary(DateFormat.getTimeFormat(requireContext()).format(calendar.getTime()));
     }
 
     private void updateFeedSummary() {
@@ -162,6 +187,19 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         int minutes = Integer.parseInt(value);
         String minuteSummary = getResources().getQuantityString(R.plurals.time_minutes_quantified, minutes, minutes);
         prefetchMinutesPreference.setSummary(getString(R.string.podcast_alarm_prefetch_minutes_summary, minuteSummary));
+    }
+
+    private void updatePrefetchModeSummary(@NonNull String value) {
+        int index = prefetchModePreference.findIndexOfValue(value);
+        if (index >= 0) {
+            prefetchModePreference.setSummary(prefetchModePreference.getEntries()[index]);
+        }
+    }
+
+    private void updatePrefetchConfigurationVisibility(@NonNull String value) {
+        boolean exactTime = PodcastAlarmPreferences.PREFETCH_MODE_EXACT_TIME.equals(value);
+        prefetchMinutesPreference.setVisible(!exactTime);
+        downloadTimePreference.setVisible(exactTime);
     }
 
     private void updatePermissionVisibility() {
@@ -222,13 +260,25 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
     }
 
     private void openTimePicker() {
+        openTimePicker(PodcastAlarmPreferences.getHour(), PodcastAlarmPreferences.getMinute(),
+                (hourOfDay, minute) -> PodcastAlarmPreferences.setTime(hourOfDay, minute),
+                R.string.podcast_alarm_time_title);
+    }
+
+    private void openDownloadTimePicker() {
+        openTimePicker(PodcastAlarmPreferences.getDownloadHour(), PodcastAlarmPreferences.getDownloadMinute(),
+                (hourOfDay, minute) -> PodcastAlarmPreferences.setDownloadTime(hourOfDay, minute),
+                R.string.podcast_alarm_download_time_title);
+    }
+
+    private void openTimePicker(int hour, int minute, @NonNull TimeSelectedListener listener, int titleRes) {
         TimePickerDialog picker = new TimePickerDialog(
-            requireContext(),
-            (view, hourOfDay, minute) -> PodcastAlarmPreferences.setTime(hourOfDay, minute),
-            PodcastAlarmPreferences.getHour(),
-            PodcastAlarmPreferences.getMinute(),
-            DateFormat.is24HourFormat(requireContext()));
-        picker.setTitle(R.string.podcast_alarm_time_title);
+                requireContext(),
+                (view, hourOfDay, selectedMinute) -> listener.onTimeSelected(hourOfDay, selectedMinute),
+                hour,
+                minute,
+                DateFormat.is24HourFormat(requireContext()));
+        picker.setTitle(titleRes);
         picker.show();
     }
 
@@ -248,5 +298,9 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
             throw new IllegalArgumentException("Preference with key '" + key + "' is not found");
         }
         return result;
+    }
+
+    private interface TimeSelectedListener {
+        void onTimeSelected(int hourOfDay, int minute);
     }
 }

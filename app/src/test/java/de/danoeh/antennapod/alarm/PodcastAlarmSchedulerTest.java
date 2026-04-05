@@ -38,4 +38,19 @@ public class PodcastAlarmSchedulerTest {
         expected.set(Calendar.MILLISECOND, 0);
         assertEquals(expected.getTimeInMillis(), triggerAt);
     }
+
+    @Test
+    public void getNextTriggerAtMillisMovesToTomorrowWhenTimeMatchesNow() {
+        Calendar now = Calendar.getInstance();
+        now.set(2026, Calendar.APRIL, 5, 8, 30, 0);
+        now.set(Calendar.MILLISECOND, 0);
+
+        long triggerAt = PodcastAlarmScheduler.getNextTriggerAtMillis(now.getTimeInMillis(), 8, 30);
+
+        Calendar expected = (Calendar) now.clone();
+        expected.add(Calendar.DAY_OF_YEAR, 1);
+        expected.set(Calendar.SECOND, 0);
+        expected.set(Calendar.MILLISECOND, 0);
+        assertEquals(expected.getTimeInMillis(), triggerAt);
+    }
 }

@@ -15,7 +15,13 @@ public class PodcastAlarmPreferences {
     public static final String PREF_HOUR = "prefPodcastAlarmHour";
     public static final String PREF_MINUTE = "prefPodcastAlarmMinute";
     public static final String PREF_PREFETCH_ENABLED = "prefPodcastAlarmPrefetchEnabled";
+    public static final String PREF_PREFETCH_MODE = "prefPodcastAlarmPrefetchMode";
     public static final String PREF_PREFETCH_MINUTES = "prefPodcastAlarmPrefetchMinutes";
+    public static final String PREF_DOWNLOAD_HOUR = "prefPodcastAlarmDownloadHour";
+    public static final String PREF_DOWNLOAD_MINUTE = "prefPodcastAlarmDownloadMinute";
+
+    public static final String PREFETCH_MODE_LEAD_TIME = "lead_time";
+    public static final String PREFETCH_MODE_EXACT_TIME = "exact_time";
 
     private static final int DEFAULT_HOUR = 7;
     private static final int DEFAULT_MINUTE = 0;
@@ -67,7 +73,31 @@ public class PodcastAlarmPreferences {
         return prefs.getBoolean(PREF_PREFETCH_ENABLED, false);
     }
 
+    @NonNull
+    public static String getPrefetchMode() {
+        return prefs.getString(PREF_PREFETCH_MODE, PREFETCH_MODE_LEAD_TIME);
+    }
+
+    public static boolean isPrefetchAtExactTime() {
+        return PREFETCH_MODE_EXACT_TIME.equals(getPrefetchMode());
+    }
+
     public static int getPrefetchMinutes() {
         return Integer.parseInt(prefs.getString(PREF_PREFETCH_MINUTES, String.valueOf(DEFAULT_PREFETCH_MINUTES)));
+    }
+
+    public static int getDownloadHour() {
+        return prefs.getInt(PREF_DOWNLOAD_HOUR, getHour());
+    }
+
+    public static int getDownloadMinute() {
+        return prefs.getInt(PREF_DOWNLOAD_MINUTE, getMinute());
+    }
+
+    public static void setDownloadTime(int hourOfDay, int minute) {
+        prefs.edit()
+                .putInt(PREF_DOWNLOAD_HOUR, hourOfDay)
+                .putInt(PREF_DOWNLOAD_MINUTE, minute)
+                .apply();
     }
 }

@@ -120,6 +120,16 @@
         <item>180</item>
     </string-array>
 
+    <string-array name="podcast_alarm_download_mode_entries">
+        <item>@string/podcast_alarm_download_mode_lead_time</item>
+        <item>@string/podcast_alarm_download_mode_exact_time</item>
+    </string-array>
+
+    <string-array name="podcast_alarm_download_mode_values">
+        <item>lead_time</item>
+        <item>exact_time</item>
+    </string-array>
+
 
     <integer-array name="seek_delta_values">
         <item>5</item>

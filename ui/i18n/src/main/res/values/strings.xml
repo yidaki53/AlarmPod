@@ -44,10 +44,15 @@
     <string name="podcast_alarm_select_podcast_first">Choose a podcast before enabling the alarm.</string>
     <string name="podcast_alarm_no_podcast_selected">No podcast selected</string>
     <string name="podcast_alarm_time_title">Alarm time</string>
-    <string name="podcast_alarm_prefetch_title">Download before alarm</string>
-    <string name="podcast_alarm_prefetch_summary">Refresh the podcast and try to download the next alarm episode ahead of time</string>
+    <string name="podcast_alarm_prefetch_title">Download automatically</string>
+    <string name="podcast_alarm_prefetch_summary">Refresh the podcast and try to download the next alarm episode before playback or at a dedicated time</string>
+    <string name="podcast_alarm_download_mode_title">Download timing</string>
+    <string name="podcast_alarm_download_mode_lead_time">Before the alarm</string>
+    <string name="podcast_alarm_download_mode_exact_time">At a specific time</string>
     <string name="podcast_alarm_prefetch_time_title">Download lead time</string>
     <string name="podcast_alarm_prefetch_minutes_summary">%1$s before the alarm</string>
+    <string name="podcast_alarm_download_time_title">Download time</string>
+    <string name="podcast_alarm_download_notification_summary">Downloading the next alarm episode</string>
     <string name="podcast_alarm_exact_alarm_title">Allow exact alarms</string>
     <string name="podcast_alarm_exact_alarm_summary">Required to start playback at the exact alarm time on this Android version</string>
     <string name="podcast_alarm_exact_alarm_required">Allow exact alarms before enabling the podcast alarm.</string>
