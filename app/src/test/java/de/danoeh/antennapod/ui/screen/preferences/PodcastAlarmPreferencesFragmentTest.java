@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
+import de.danoeh.antennapod.alarm.PodcastAlarmStatusEvaluator;
 import de.danoeh.antennapod.storage.preferences.PodcastAlarmPreferences;
 
 import static org.junit.Assert.assertEquals;
@@ -67,6 +68,24 @@ public class PodcastAlarmPreferencesFragmentTest {
 
         assertEquals(
                 context.getString(de.danoeh.antennapod.R.string.podcast_alarm_last_outcome_failed, "IllegalStateException"),
+                summary);
+    }
+
+    @Test
+    public void getScheduleSummaryDescribesLeadTimeMode() {
+        CharSequence summary = PodcastAlarmPreferencesFragment.getScheduleSummary(
+                context,
+                PodcastAlarmStatusEvaluator.ScheduleStatus.of(
+                        PodcastAlarmStatusEvaluator.ScheduleState.LEAD_TIME_MODE),
+                de.danoeh.antennapod.R.string.podcast_alarm_next_download_disabled,
+                de.danoeh.antennapod.R.string.podcast_alarm_next_download_missing_podcast,
+                de.danoeh.antennapod.R.string.podcast_alarm_next_download_permission_needed,
+                de.danoeh.antennapod.R.string.podcast_alarm_next_download_scheduled,
+                de.danoeh.antennapod.R.string.podcast_alarm_next_download_prefetch_disabled,
+                de.danoeh.antennapod.R.string.podcast_alarm_next_download_lead_time_mode);
+
+        assertEquals(
+                context.getString(de.danoeh.antennapod.R.string.podcast_alarm_next_download_lead_time_mode),
                 summary);
     }
 }

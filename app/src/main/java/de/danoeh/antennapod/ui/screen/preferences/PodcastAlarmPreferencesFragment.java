@@ -26,6 +26,7 @@ import java.util.List;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.alarm.PodcastAlarmScheduler;
+import de.danoeh.antennapod.alarm.PodcastAlarmStatusEvaluator;
 import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.preferences.PodcastAlarmPreferences;
@@ -40,6 +41,7 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
     private Preference selectedPodcastPreference;
     private Preference timePreference;
     private Preference nextPlaybackPreference;
+    private Preference nextDownloadPreference;
     private Preference lastOutcomePreference;
     private Preference downloadTimePreference;
     private Preference exactAlarmPermissionPreference;
@@ -56,6 +58,7 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         selectedPodcastPreference = requirePreference(PodcastAlarmPreferences.PREF_FEED_ID);
         timePreference = requirePreference("prefPodcastAlarmTime");
         nextPlaybackPreference = requirePreference("prefPodcastAlarmNextPlayback");
+        nextDownloadPreference = requirePreference("prefPodcastAlarmNextDownload");
         lastOutcomePreference = requirePreference("prefPodcastAlarmLastOutcome");
         downloadTimePreference = requirePreference("prefPodcastAlarmDownloadTime");
         exactAlarmPermissionPreference = requirePreference("prefPodcastAlarmExactAlarmPermission");
@@ -147,6 +150,7 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         updateDownloadTimeSummary();
         updateFeedSummary();
         updateNextPlaybackSummary();
+        updateNextDownloadSummary();
         updateLastOutcomeSummary();
         updatePrefetchModeSummary(prefetchModePreference.getValue());
         updatePrefetchSummary(prefetchMinutesPreference.getValue());
@@ -173,23 +177,31 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
     }
 
     private void updateNextPlaybackSummary() {
-        if (!PodcastAlarmPreferences.isEnabled()) {
-            nextPlaybackPreference.setSummary(R.string.podcast_alarm_next_playback_disabled);
-            return;
-        }
-        if (!PodcastAlarmPreferences.hasSelectedFeed()) {
-            nextPlaybackPreference.setSummary(R.string.podcast_alarm_next_playback_missing_podcast);
-            return;
-        }
-        if (!PodcastAlarmScheduler.canScheduleExactAlarms(requireContext())) {
-            nextPlaybackPreference.setSummary(R.string.podcast_alarm_next_playback_permission_needed);
-            return;
-        }
+        PodcastAlarmStatusEvaluator.ScheduleStatus status = PodcastAlarmStatusEvaluator
+                .getPlaybackStatus(requireContext(), System.currentTimeMillis());
+        nextPlaybackPreference.setSummary(getScheduleSummary(
+                requireContext(),
+                status,
+                R.string.podcast_alarm_next_playback_disabled,
+                R.string.podcast_alarm_next_playback_missing_podcast,
+                R.string.podcast_alarm_next_playback_permission_needed,
+                R.string.podcast_alarm_next_playback_scheduled,
+                0,
+                0));
+    }
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(PodcastAlarmScheduler.getNextPlaybackTriggerAtMillis(System.currentTimeMillis()));
-        String formattedTime = DateFormat.getTimeFormat(requireContext()).format(calendar.getTime());
-        nextPlaybackPreference.setSummary(getString(R.string.podcast_alarm_next_playback_scheduled, formattedTime));
+    private void updateNextDownloadSummary() {
+        PodcastAlarmStatusEvaluator.ScheduleStatus status = PodcastAlarmStatusEvaluator
+                .getDownloadStatus(requireContext(), System.currentTimeMillis());
+        nextDownloadPreference.setSummary(getScheduleSummary(
+                requireContext(),
+                status,
+                R.string.podcast_alarm_next_download_disabled,
+                R.string.podcast_alarm_next_download_missing_podcast,
+                R.string.podcast_alarm_next_download_permission_needed,
+                R.string.podcast_alarm_next_download_scheduled,
+                R.string.podcast_alarm_next_download_prefetch_disabled,
+                R.string.podcast_alarm_next_download_lead_time_mode));
     }
 
     private void updateLastOutcomeSummary() {
@@ -274,6 +286,38 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
                     stage.substring("failed:".length()));
         }
         return context.getString(R.string.podcast_alarm_last_outcome_none);
+    }
+
+    static CharSequence getScheduleSummary(@NonNull Context context,
+                                           @NonNull PodcastAlarmStatusEvaluator.ScheduleStatus status,
+                                           int disabledRes,
+                                           int missingPodcastRes,
+                                           int permissionNeededRes,
+                                           int scheduledRes,
+                                           int automaticDownloadDisabledRes,
+                                           int leadTimeModeRes) {
+        PodcastAlarmStatusEvaluator.ScheduleState state = status.getState();
+        if (state == PodcastAlarmStatusEvaluator.ScheduleState.DISABLED) {
+            return context.getString(disabledRes);
+        }
+        if (state == PodcastAlarmStatusEvaluator.ScheduleState.MISSING_PODCAST) {
+            return context.getString(missingPodcastRes);
+        }
+        if (state == PodcastAlarmStatusEvaluator.ScheduleState.EXACT_ALARM_PERMISSION_REQUIRED) {
+            return context.getString(permissionNeededRes);
+        }
+        if (state == PodcastAlarmStatusEvaluator.ScheduleState.AUTOMATIC_DOWNLOAD_DISABLED
+                && automaticDownloadDisabledRes != 0) {
+            return context.getString(automaticDownloadDisabledRes);
+        }
+        if (state == PodcastAlarmStatusEvaluator.ScheduleState.LEAD_TIME_MODE && leadTimeModeRes != 0) {
+            return context.getString(leadTimeModeRes);
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(status.getTriggerAtMillis());
+        String formattedTime = DateFormat.getTimeFormat(context).format(calendar.getTime());
+        return context.getString(scheduledRes, formattedTime);
     }
 
     private void openPodcastSelection() {

@@ -47,6 +47,7 @@ applyTo: "app/src/main/java/de/danoeh/antennapod/alarm/**/*.java,app/src/main/ja
 - The exact-alarm permission preference should only be visible when the permission is actually needed.
 - On this device, the platform `TimePickerDialog` is more reliable than `MaterialTimePicker` for persisting the selected alarm hour correctly.
 - The automation UI supports two download strategies: lead time before playback, or a separate exact download time of day.
+- Keep playback and exact-download schedule-state evaluation in a dedicated helper so the preferences fragment only renders summaries instead of duplicating enable, feed-selection, prefetch-mode, and exact-alarm gating logic.
 - Keep the settings search breadcrumbs and the Rx-backed feed selection block formatted to satisfy the repository's strict checkstyle indentation rules. Reviewers will look for both semantic correctness and stable formatting in these touchpoints.
 
 ## Tests and validation

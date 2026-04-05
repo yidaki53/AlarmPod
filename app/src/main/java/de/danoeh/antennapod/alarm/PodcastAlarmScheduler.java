@@ -83,6 +83,13 @@ public final class PodcastAlarmScheduler {
                 PodcastAlarmPreferences.getMinute());
     }
 
+    public static long getNextDownloadTriggerAtMillis(long nowMillis) {
+        return getNextTriggerAtMillis(
+                nowMillis,
+                PodcastAlarmPreferences.getDownloadHour(),
+                PodcastAlarmPreferences.getDownloadMinute());
+    }
+
     static long getNextTriggerAtMillis(long nowMillis, int hourOfDay, int minute) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(nowMillis);
@@ -180,10 +187,7 @@ public final class PodcastAlarmScheduler {
 
         PendingIntent pendingIntent = getDownloadTriggerPendingIntent(context);
         alarmManager.cancel(pendingIntent);
-        long downloadTriggerAtMillis = getNextTriggerAtMillis(
-                System.currentTimeMillis(),
-                PodcastAlarmPreferences.getDownloadHour(),
-                PodcastAlarmPreferences.getDownloadMinute());
+        long downloadTriggerAtMillis = getNextDownloadTriggerAtMillis(System.currentTimeMillis());
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, downloadTriggerAtMillis, pendingIntent);
     }
 

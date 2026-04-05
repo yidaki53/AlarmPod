@@ -61,5 +61,10 @@
                 android:key="prefPodcastAlarmDownloadTime"
                 android:dependency="prefPodcastAlarmPrefetchEnabled"
                 android:title="@string/podcast_alarm_download_time_title" />
+
+        <Preference
+                android:key="prefPodcastAlarmNextDownload"
+                android:selectable="false"
+                android:title="@string/podcast_alarm_next_download_title" />
     </PreferenceCategory>
 </PreferenceScreen>
