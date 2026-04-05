@@ -196,10 +196,16 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         }
     }
 
-    private void updatePrefetchConfigurationVisibility(@NonNull String value) {
+    static void updatePrefetchConfigurationVisibility(@NonNull Preference prefetchMinutesPreference,
+                                                      @NonNull Preference downloadTimePreference,
+                                                      @NonNull String value) {
         boolean exactTime = PodcastAlarmPreferences.PREFETCH_MODE_EXACT_TIME.equals(value);
         prefetchMinutesPreference.setVisible(!exactTime);
         downloadTimePreference.setVisible(exactTime);
+    }
+
+    private void updatePrefetchConfigurationVisibility(@NonNull String value) {
+        updatePrefetchConfigurationVisibility(prefetchMinutesPreference, downloadTimePreference, value);
     }
 
     private void updatePermissionVisibility() {

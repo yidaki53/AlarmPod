@@ -1,13 +1,18 @@
 package de.danoeh.antennapod.alarm;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+@RunWith(RobolectricTestRunner.class)
 public class PodcastAlarmSchedulerTest {
-
     @Test
     public void getNextTriggerAtMillisKeepsTodayForFutureTime() {
         Calendar now = Calendar.getInstance();
@@ -52,5 +57,48 @@ public class PodcastAlarmSchedulerTest {
         expected.set(Calendar.SECOND, 0);
         expected.set(Calendar.MILLISECOND, 0);
         assertEquals(expected.getTimeInMillis(), triggerAt);
+    }
+
+    @Test
+    public void getPrefetchPlanReturnsNoneWhenPrefetchIsDisabled() {
+        PodcastAlarmScheduler.PrefetchPlan prefetchPlan = PodcastAlarmScheduler.getPrefetchPlan(
+                1_000L,
+                5_000L,
+                false,
+                42L,
+                false,
+                30);
+
+        assertFalse(prefetchPlan.schedulesWork());
+        assertFalse(prefetchPlan.schedulesExactDownload());
+    }
+
+    @Test
+    public void getPrefetchPlanReturnsLeadTimeWorkWithClampedDelay() {
+        PodcastAlarmScheduler.PrefetchPlan prefetchPlan = PodcastAlarmScheduler.getPrefetchPlan(
+                TimeUnit.MINUTES.toMillis(80),
+                TimeUnit.MINUTES.toMillis(100),
+                true,
+                42L,
+                false,
+                30);
+
+        assertTrue(prefetchPlan.schedulesWork());
+        assertFalse(prefetchPlan.schedulesExactDownload());
+        assertEquals(TimeUnit.MINUTES.toMillis(0), prefetchPlan.getInitialDelayMillis());
+    }
+
+    @Test
+    public void getPrefetchPlanReturnsExactDownloadForExactTimeMode() {
+        PodcastAlarmScheduler.PrefetchPlan prefetchPlan = PodcastAlarmScheduler.getPrefetchPlan(
+                1_000L,
+                5_000L,
+                true,
+                42L,
+                true,
+                30);
+
+        assertFalse(prefetchPlan.schedulesWork());
+        assertTrue(prefetchPlan.schedulesExactDownload());
     }
 }

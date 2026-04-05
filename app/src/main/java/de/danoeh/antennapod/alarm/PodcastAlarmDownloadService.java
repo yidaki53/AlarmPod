@@ -27,6 +27,13 @@ public class PodcastAlarmDownloadService extends Service {
         return new Intent(context, PodcastAlarmDownloadService.class).setAction(ACTION_TRIGGER);
     }
 
+    static boolean shouldEnqueueImmediatePrefetch(boolean enabled,
+                                                 boolean prefetchEnabled,
+                                                 boolean exactTime,
+                                                 long feedId) {
+        return enabled && prefetchEnabled && exactTime && feedId > 0;
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -44,14 +51,12 @@ public class PodcastAlarmDownloadService extends Service {
         Thread worker = new Thread(() -> {
             try {
                 PodcastAlarmScheduler.schedule(getApplicationContext());
-                if (!PodcastAlarmPreferences.isEnabled()
-                        || !PodcastAlarmPreferences.isPrefetchEnabled()
-                        || !PodcastAlarmPreferences.isPrefetchAtExactTime()) {
-                    return;
-                }
-
                 long feedId = PodcastAlarmPreferences.getSelectedFeedId();
-                if (feedId <= 0) {
+                if (!shouldEnqueueImmediatePrefetch(
+                        PodcastAlarmPreferences.isEnabled(),
+                        PodcastAlarmPreferences.isPrefetchEnabled(),
+                        PodcastAlarmPreferences.isPrefetchAtExactTime(),
+                        feedId)) {
                     return;
                 }
 

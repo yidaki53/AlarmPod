@@ -89,26 +89,43 @@ public final class PodcastAlarmScheduler {
         return calendar.getTimeInMillis();
     }
 
+    static PrefetchPlan getPrefetchPlan(long nowMillis,
+                                        long triggerAtMillis,
+                                        boolean prefetchEnabled,
+                                        long feedId,
+                                        boolean exactTime,
+                                        int prefetchMinutes) {
+        if (!prefetchEnabled || feedId <= 0) {
+            return PrefetchPlan.none();
+        }
+        if (exactTime) {
+            return PrefetchPlan.exactDownload();
+        }
+
+        long prefetchAtMillis = triggerAtMillis - TimeUnit.MINUTES.toMillis(prefetchMinutes);
+        long initialDelay = Math.max(0L, prefetchAtMillis - nowMillis);
+        return PrefetchPlan.leadTime(initialDelay);
+    }
+
     private static void schedulePrefetch(@NonNull Context context, long triggerAtMillis) {
         cancelPrefetch(context);
-        if (!PodcastAlarmPreferences.isPrefetchEnabled()) {
-            return;
-        }
-
         long feedId = PodcastAlarmPreferences.getSelectedFeedId();
-        if (feedId <= 0) {
-            return;
-        }
-
-        if (PodcastAlarmPreferences.isPrefetchAtExactTime()) {
+        PrefetchPlan prefetchPlan = getPrefetchPlan(
+                System.currentTimeMillis(),
+                triggerAtMillis,
+                PodcastAlarmPreferences.isPrefetchEnabled(),
+                feedId,
+                PodcastAlarmPreferences.isPrefetchAtExactTime(),
+                PodcastAlarmPreferences.getPrefetchMinutes());
+        if (prefetchPlan.schedulesExactDownload()) {
             scheduleExactDownload(context);
             return;
         }
+        if (!prefetchPlan.schedulesWork()) {
+            return;
+        }
 
-        long prefetchAtMillis = triggerAtMillis - TimeUnit.MINUTES.toMillis(PodcastAlarmPreferences.getPrefetchMinutes());
-        long initialDelay = Math.max(0L, prefetchAtMillis - System.currentTimeMillis());
-
-        enqueuePrefetchWork(context, feedId, initialDelay);
+        enqueuePrefetchWork(context, feedId, prefetchPlan.getInitialDelayMillis());
     }
 
     static void enqueuePrefetchWork(@NonNull Context context, long feedId, long initialDelay) {
@@ -205,5 +222,39 @@ public final class PodcastAlarmScheduler {
                 legacyIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         alarmManager.cancel(legacyPendingIntent);
+    }
+
+    static final class PrefetchPlan {
+        private final boolean scheduleExactDownload;
+        private final long initialDelayMillis;
+
+        private PrefetchPlan(boolean scheduleExactDownload, long initialDelayMillis) {
+            this.scheduleExactDownload = scheduleExactDownload;
+            this.initialDelayMillis = initialDelayMillis;
+        }
+
+        static PrefetchPlan none() {
+            return new PrefetchPlan(false, -1L);
+        }
+
+        static PrefetchPlan exactDownload() {
+            return new PrefetchPlan(true, -1L);
+        }
+
+        static PrefetchPlan leadTime(long initialDelayMillis) {
+            return new PrefetchPlan(false, initialDelayMillis);
+        }
+
+        boolean schedulesExactDownload() {
+            return scheduleExactDownload;
+        }
+
+        boolean schedulesWork() {
+            return !scheduleExactDownload && initialDelayMillis >= 0L;
+        }
+
+        long getInitialDelayMillis() {
+            return initialDelayMillis;
+        }
     }
 }
