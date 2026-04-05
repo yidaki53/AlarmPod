@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/podcast_alarm_title">
+        <Preference
+                android:key="prefPodcastAlarmFeedId"
+                android:title="@string/podcast_alarm_choose_podcast"
+                android:summary="@string/podcast_alarm_no_podcast_selected" />
+
+        <Preference
+                android:key="prefPodcastAlarmTime"
+                android:title="@string/podcast_alarm_time_title" />
+
+        <Preference
+                android:key="prefPodcastAlarmExactAlarmPermission"
+                android:title="@string/podcast_alarm_exact_alarm_title"
+                android:summary="@string/podcast_alarm_exact_alarm_summary"
+                android:visible="false" />
+
+        <SwitchPreferenceCompat
+                android:key="prefPodcastAlarmEnabled"
+                android:defaultValue="false"
+                android:title="@string/podcast_alarm_enabled_title"
+                android:summary="@string/podcast_alarm_enabled_summary" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/automation">
+        <SwitchPreferenceCompat
+                android:key="prefPodcastAlarmPrefetchEnabled"
+                android:defaultValue="false"
+                android:title="@string/podcast_alarm_prefetch_title"
+                android:summary="@string/podcast_alarm_prefetch_summary" />
+
+        <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
+                android:key="prefPodcastAlarmPrefetchMinutes"
+                android:defaultValue="60"
+                android:dependency="prefPodcastAlarmPrefetchEnabled"
+                android:entries="@array/podcast_alarm_prefetch_entries"
+                android:entryValues="@array/podcast_alarm_prefetch_values"
+                android:title="@string/podcast_alarm_prefetch_time_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

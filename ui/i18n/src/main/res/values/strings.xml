@@ -36,6 +36,23 @@
     <string name="playback_history_label_short">History</string>
     <string name="years_statistics_label">Years</string>
     <string name="notification_pref_fragment">Notifications</string>
+    <string name="podcast_alarm_title">Podcast alarm</string>
+    <string name="podcast_alarm_summary">Wake up to the newest episode from one podcast</string>
+    <string name="podcast_alarm_enabled_title">Enable daily podcast alarm</string>
+    <string name="podcast_alarm_enabled_summary">Play the latest available episode for one selected podcast at the chosen time</string>
+    <string name="podcast_alarm_choose_podcast">Podcast</string>
+    <string name="podcast_alarm_select_podcast_first">Choose a podcast before enabling the alarm.</string>
+    <string name="podcast_alarm_no_podcast_selected">No podcast selected</string>
+    <string name="podcast_alarm_time_title">Alarm time</string>
+    <string name="podcast_alarm_prefetch_title">Download before alarm</string>
+    <string name="podcast_alarm_prefetch_summary">Refresh the podcast and try to download the next alarm episode ahead of time</string>
+    <string name="podcast_alarm_prefetch_time_title">Download lead time</string>
+    <string name="podcast_alarm_prefetch_minutes_summary">%1$s before the alarm</string>
+    <string name="podcast_alarm_exact_alarm_title">Allow exact alarms</string>
+    <string name="podcast_alarm_exact_alarm_summary">Required to start playback at the exact alarm time on this Android version</string>
+    <string name="podcast_alarm_exact_alarm_required">Allow exact alarms before enabling the podcast alarm.</string>
+    <string name="podcast_alarm_generic_alarm_summary">No playable episode was available. Playing the device alarm instead.</string>
+    <string name="podcast_alarm_stop_action">Stop</string>
     <string name="current_playing_episode">Current</string>
 
     <!-- Google Assistant -->
