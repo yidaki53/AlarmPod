@@ -76,6 +76,13 @@ public final class PodcastAlarmScheduler {
         return alarmManager != null && alarmManager.canScheduleExactAlarms();
     }
 
+    public static long getNextPlaybackTriggerAtMillis(long nowMillis) {
+        return getNextTriggerAtMillis(
+                nowMillis,
+                PodcastAlarmPreferences.getHour(),
+                PodcastAlarmPreferences.getMinute());
+    }
+
     static long getNextTriggerAtMillis(long nowMillis, int hourOfDay, int minute) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(nowMillis);

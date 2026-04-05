@@ -19,6 +19,7 @@ public class PodcastAlarmPreferences {
     public static final String PREF_PREFETCH_MINUTES = "prefPodcastAlarmPrefetchMinutes";
     public static final String PREF_DOWNLOAD_HOUR = "prefPodcastAlarmDownloadHour";
     public static final String PREF_DOWNLOAD_MINUTE = "prefPodcastAlarmDownloadMinute";
+    public static final String PREF_LAST_STAGE = "prefPodcastAlarmLastStage";
 
     public static final String PREFETCH_MODE_LEAD_TIME = "lead_time";
     public static final String PREFETCH_MODE_EXACT_TIME = "exact_time";
@@ -99,5 +100,14 @@ public class PodcastAlarmPreferences {
                 .putInt(PREF_DOWNLOAD_HOUR, hourOfDay)
                 .putInt(PREF_DOWNLOAD_MINUTE, minute)
                 .apply();
+    }
+
+    @NonNull
+    public static String getLastStage() {
+        return prefs.getString(PREF_LAST_STAGE, "");
+    }
+
+    public static void setLastStage(@NonNull String stage) {
+        prefs.edit().putString(PREF_LAST_STAGE, stage).apply();
     }
 }

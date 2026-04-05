@@ -13,6 +13,7 @@ import org.robolectric.RobolectricTestRunner;
 
 import de.danoeh.antennapod.storage.preferences.PodcastAlarmPreferences;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -51,5 +52,21 @@ public class PodcastAlarmPreferencesFragmentTest {
 
         assertTrue(prefetchMinutesPreference.isVisible());
         assertFalse(downloadTimePreference.isVisible());
+    }
+
+    @Test
+    public void getLastOutcomeSummaryDescribesPlaybackStarted() {
+        CharSequence summary = PodcastAlarmPreferencesFragment.getLastOutcomeSummary(context, "playback-started");
+
+        assertEquals(context.getString(de.danoeh.antennapod.R.string.podcast_alarm_last_outcome_playback_started), summary);
+    }
+
+    @Test
+    public void getLastOutcomeSummaryDescribesFailures() {
+        CharSequence summary = PodcastAlarmPreferencesFragment.getLastOutcomeSummary(context, "failed:IllegalStateException");
+
+        assertEquals(
+                context.getString(de.danoeh.antennapod.R.string.podcast_alarm_last_outcome_failed, "IllegalStateException"),
+                summary);
     }
 }

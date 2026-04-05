@@ -10,7 +10,6 @@ import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
-import androidx.preference.PreferenceManager;
 
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.model.feed.FeedMedia;
@@ -21,7 +20,6 @@ import de.danoeh.antennapod.ui.notifications.NotificationUtils;
 
 public class PodcastAlarmExecutionService extends Service {
     private static final String ACTION_TRIGGER = "de.danoeh.antennapod.intent.action.TRIGGER_PODCAST_ALARM";
-    private static final String PREF_LAST_STAGE = "prefPodcastAlarmLastStage";
     private static final int NOTIFICATION_ID = 4003;
 
     public static void start(Context context) {
@@ -82,7 +80,6 @@ public class PodcastAlarmExecutionService extends Service {
             } finally {
                 stopForegroundCompat();
                 stopSelf(startId);
-                setLastStage("finished");
             }
         }, "PodcastAlarmExecutionService");
         worker.start();
@@ -113,10 +110,7 @@ public class PodcastAlarmExecutionService extends Service {
     }
 
     private void setLastStage(String stage) {
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .edit()
-                .putString(PREF_LAST_STAGE, stage)
-                .apply();
+        PodcastAlarmPreferences.setLastStage(stage);
     }
 
     private void stopForegroundCompat() {

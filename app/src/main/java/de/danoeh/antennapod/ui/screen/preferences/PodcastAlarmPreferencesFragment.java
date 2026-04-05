@@ -1,6 +1,7 @@
 package de.danoeh.antennapod.ui.screen.preferences;
 
 import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -38,6 +39,8 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         implements SharedPreferences.OnSharedPreferenceChangeListener {
     private Preference selectedPodcastPreference;
     private Preference timePreference;
+    private Preference nextPlaybackPreference;
+    private Preference lastOutcomePreference;
     private Preference downloadTimePreference;
     private Preference exactAlarmPermissionPreference;
     private SwitchPreferenceCompat enabledPreference;
@@ -52,6 +55,8 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
 
         selectedPodcastPreference = requirePreference(PodcastAlarmPreferences.PREF_FEED_ID);
         timePreference = requirePreference("prefPodcastAlarmTime");
+        nextPlaybackPreference = requirePreference("prefPodcastAlarmNextPlayback");
+        lastOutcomePreference = requirePreference("prefPodcastAlarmLastOutcome");
         downloadTimePreference = requirePreference("prefPodcastAlarmDownloadTime");
         exactAlarmPermissionPreference = requirePreference("prefPodcastAlarmExactAlarmPermission");
         enabledPreference = requirePreference(PodcastAlarmPreferences.PREF_ENABLED);
@@ -141,6 +146,8 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         updateTimeSummary();
         updateDownloadTimeSummary();
         updateFeedSummary();
+        updateNextPlaybackSummary();
+        updateLastOutcomeSummary();
         updatePrefetchModeSummary(prefetchModePreference.getValue());
         updatePrefetchSummary(prefetchMinutesPreference.getValue());
         updatePrefetchConfigurationVisibility(prefetchModePreference.getValue());
@@ -163,6 +170,31 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         downloadTimePreference.setSummary(DateFormat.getTimeFormat(requireContext()).format(calendar.getTime()));
+    }
+
+    private void updateNextPlaybackSummary() {
+        if (!PodcastAlarmPreferences.isEnabled()) {
+            nextPlaybackPreference.setSummary(R.string.podcast_alarm_next_playback_disabled);
+            return;
+        }
+        if (!PodcastAlarmPreferences.hasSelectedFeed()) {
+            nextPlaybackPreference.setSummary(R.string.podcast_alarm_next_playback_missing_podcast);
+            return;
+        }
+        if (!PodcastAlarmScheduler.canScheduleExactAlarms(requireContext())) {
+            nextPlaybackPreference.setSummary(R.string.podcast_alarm_next_playback_permission_needed);
+            return;
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(PodcastAlarmScheduler.getNextPlaybackTriggerAtMillis(System.currentTimeMillis()));
+        String formattedTime = DateFormat.getTimeFormat(requireContext()).format(calendar.getTime());
+        nextPlaybackPreference.setSummary(getString(R.string.podcast_alarm_next_playback_scheduled, formattedTime));
+    }
+
+    private void updateLastOutcomeSummary() {
+        lastOutcomePreference.setSummary(
+                getLastOutcomeSummary(requireContext(), PodcastAlarmPreferences.getLastStage()));
     }
 
     private void updateFeedSummary() {
@@ -212,6 +244,36 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         boolean shouldShow = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                 && !PodcastAlarmScheduler.canScheduleExactAlarms(requireContext());
         exactAlarmPermissionPreference.setVisible(shouldShow);
+    }
+
+    static CharSequence getLastOutcomeSummary(@NonNull Context context, @NonNull String stage) {
+        if (stage.isEmpty()) {
+            return context.getString(R.string.podcast_alarm_last_outcome_none);
+        }
+        if ("playback-started".equals(stage)) {
+            return context.getString(R.string.podcast_alarm_last_outcome_playback_started);
+        }
+        if ("fallback-started".equals(stage)) {
+            return context.getString(R.string.podcast_alarm_last_outcome_fallback_started);
+        }
+        if ("disabled".equals(stage)) {
+            return context.getString(R.string.podcast_alarm_last_outcome_disabled);
+        }
+        if ("resolved-episode".equals(stage) || "resolving-episode".equals(stage)) {
+            return context.getString(R.string.podcast_alarm_last_outcome_resolving_episode);
+        }
+        if ("scheduled-next".equals(stage) || "scheduling-next".equals(stage)) {
+            return context.getString(R.string.podcast_alarm_last_outcome_scheduling_next);
+        }
+        if ("service-started".equals(stage) || "starting-playback".equals(stage)
+                || "starting-fallback".equals(stage)) {
+            return context.getString(R.string.podcast_alarm_last_outcome_service_started);
+        }
+        if (stage.startsWith("failed:")) {
+            return context.getString(R.string.podcast_alarm_last_outcome_failed,
+                    stage.substring("failed:".length()));
+        }
+        return context.getString(R.string.podcast_alarm_last_outcome_none);
     }
 
     private void openPodcastSelection() {

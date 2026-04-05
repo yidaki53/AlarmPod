@@ -12,6 +12,16 @@
                 android:title="@string/podcast_alarm_time_title" />
 
         <Preference
+                android:key="prefPodcastAlarmNextPlayback"
+                android:selectable="false"
+                android:title="@string/podcast_alarm_next_playback_title" />
+
+        <Preference
+                android:key="prefPodcastAlarmLastOutcome"
+                android:selectable="false"
+                android:title="@string/podcast_alarm_last_outcome_title" />
+
+        <Preference
                 android:key="prefPodcastAlarmExactAlarmPermission"
                 android:title="@string/podcast_alarm_exact_alarm_title"
                 android:summary="@string/podcast_alarm_exact_alarm_summary"
