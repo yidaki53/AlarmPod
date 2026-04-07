@@ -34,9 +34,16 @@ public final class PodcastAlarmStatusEvaluator {
     @NonNull
     public static ExactAlarmRequirement getExactAlarmRequirement(@NonNull Context context) {
         return evaluateExactAlarmRequirement(
+                PodcastAlarmPreferences.isEnabled(),
                 PodcastAlarmScheduler.canScheduleExactAlarms(context),
                 PodcastAlarmPreferences.isPrefetchEnabled(),
                 PodcastAlarmPreferences.isPrefetchAtExactTime());
+    }
+
+    public static boolean shouldShowExactAlarmPermission(@NonNull Context context) {
+        return evaluateShouldShowExactAlarmPermission(
+                android.os.Build.VERSION.SDK_INT,
+                getExactAlarmRequirement(context));
     }
 
     @NonNull
@@ -82,16 +89,23 @@ public final class PodcastAlarmStatusEvaluator {
     }
 
     @NonNull
-    static ExactAlarmRequirement evaluateExactAlarmRequirement(boolean canScheduleExactAlarms,
+    static ExactAlarmRequirement evaluateExactAlarmRequirement(boolean enabled,
+                                                               boolean canScheduleExactAlarms,
                                                                boolean prefetchEnabled,
                                                                boolean exactTime) {
-        if (canScheduleExactAlarms) {
+        if (!enabled || canScheduleExactAlarms) {
             return ExactAlarmRequirement.NOT_REQUIRED;
         }
         if (prefetchEnabled && exactTime) {
             return ExactAlarmRequirement.PLAYBACK_AND_EXACT_DOWNLOAD;
         }
         return ExactAlarmRequirement.PLAYBACK_ONLY;
+    }
+
+    static boolean evaluateShouldShowExactAlarmPermission(int sdkInt,
+                                                          @NonNull ExactAlarmRequirement requirement) {
+        return sdkInt >= android.os.Build.VERSION_CODES.S
+                && requirement != ExactAlarmRequirement.NOT_REQUIRED;
     }
 
     public enum ExactAlarmRequirement {

@@ -253,8 +253,7 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
     }
 
     private void updatePermissionVisibility() {
-        boolean shouldShow = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-                && !PodcastAlarmScheduler.canScheduleExactAlarms(requireContext());
+        boolean shouldShow = PodcastAlarmStatusEvaluator.shouldShowExactAlarmPermission(requireContext());
         exactAlarmPermissionPreference.setVisible(shouldShow);
         exactAlarmPermissionPreference.setSummary(
                 getExactAlarmPermissionSummary(

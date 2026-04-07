@@ -58,7 +58,7 @@ public class PodcastAlarmStatusEvaluatorTest {
     @Test
     public void exactAlarmRequirementIsPlaybackOnlyWithoutExactDownloadMode() {
         PodcastAlarmStatusEvaluator.ExactAlarmRequirement requirement =
-                PodcastAlarmStatusEvaluator.evaluateExactAlarmRequirement(false, true, false);
+                PodcastAlarmStatusEvaluator.evaluateExactAlarmRequirement(true, false, true, false);
 
         assertEquals(PodcastAlarmStatusEvaluator.ExactAlarmRequirement.PLAYBACK_ONLY, requirement);
     }
@@ -66,7 +66,7 @@ public class PodcastAlarmStatusEvaluatorTest {
     @Test
     public void exactAlarmRequirementIncludesDownloadsForExactDownloadMode() {
         PodcastAlarmStatusEvaluator.ExactAlarmRequirement requirement =
-                PodcastAlarmStatusEvaluator.evaluateExactAlarmRequirement(false, true, true);
+                PodcastAlarmStatusEvaluator.evaluateExactAlarmRequirement(true, false, true, true);
 
         assertEquals(PodcastAlarmStatusEvaluator.ExactAlarmRequirement.PLAYBACK_AND_EXACT_DOWNLOAD, requirement);
     }
@@ -74,8 +74,43 @@ public class PodcastAlarmStatusEvaluatorTest {
     @Test
     public void exactAlarmRequirementIsNotRequiredWhenPermissionExists() {
         PodcastAlarmStatusEvaluator.ExactAlarmRequirement requirement =
-                PodcastAlarmStatusEvaluator.evaluateExactAlarmRequirement(true, true, true);
+                PodcastAlarmStatusEvaluator.evaluateExactAlarmRequirement(true, true, true, true);
 
         assertEquals(PodcastAlarmStatusEvaluator.ExactAlarmRequirement.NOT_REQUIRED, requirement);
+    }
+
+    @Test
+    public void exactAlarmRequirementIsNotRequiredWhenAlarmIsDisabled() {
+        PodcastAlarmStatusEvaluator.ExactAlarmRequirement requirement =
+                PodcastAlarmStatusEvaluator.evaluateExactAlarmRequirement(false, false, true, true);
+
+        assertEquals(PodcastAlarmStatusEvaluator.ExactAlarmRequirement.NOT_REQUIRED, requirement);
+    }
+
+    @Test
+    public void shouldShowExactAlarmPermissionRequiresAndroid12AndNeed() {
+        boolean shouldShow = PodcastAlarmStatusEvaluator.evaluateShouldShowExactAlarmPermission(
+                android.os.Build.VERSION_CODES.S,
+                PodcastAlarmStatusEvaluator.ExactAlarmRequirement.PLAYBACK_ONLY);
+
+        assertEquals(true, shouldShow);
+    }
+
+    @Test
+    public void shouldShowExactAlarmPermissionIsHiddenWhenNotRequired() {
+        boolean shouldShow = PodcastAlarmStatusEvaluator.evaluateShouldShowExactAlarmPermission(
+                android.os.Build.VERSION_CODES.S,
+                PodcastAlarmStatusEvaluator.ExactAlarmRequirement.NOT_REQUIRED);
+
+        assertEquals(false, shouldShow);
+    }
+
+    @Test
+    public void shouldShowExactAlarmPermissionIsHiddenBeforeAndroid12() {
+        boolean shouldShow = PodcastAlarmStatusEvaluator.evaluateShouldShowExactAlarmPermission(
+                android.os.Build.VERSION_CODES.R,
+                PodcastAlarmStatusEvaluator.ExactAlarmRequirement.PLAYBACK_AND_EXACT_DOWNLOAD);
+
+        assertEquals(false, shouldShow);
     }
 }
