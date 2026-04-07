@@ -101,4 +101,18 @@ public class PodcastAlarmSchedulerTest {
         assertFalse(prefetchPlan.schedulesWork());
         assertTrue(prefetchPlan.schedulesExactDownload());
     }
+
+    @Test
+    public void getPrefetchPlanReturnsNoneWhenFeedIsMissing() {
+        PodcastAlarmScheduler.PrefetchPlan prefetchPlan = PodcastAlarmScheduler.getPrefetchPlan(
+                1_000L,
+                5_000L,
+                true,
+                0L,
+                false,
+                30);
+
+        assertFalse(prefetchPlan.schedulesWork());
+        assertFalse(prefetchPlan.schedulesExactDownload());
+    }
 }

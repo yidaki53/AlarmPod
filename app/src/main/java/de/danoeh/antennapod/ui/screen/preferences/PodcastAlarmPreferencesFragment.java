@@ -256,6 +256,10 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         boolean shouldShow = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                 && !PodcastAlarmScheduler.canScheduleExactAlarms(requireContext());
         exactAlarmPermissionPreference.setVisible(shouldShow);
+        exactAlarmPermissionPreference.setSummary(
+                getExactAlarmPermissionSummary(
+                        requireContext(),
+                        PodcastAlarmStatusEvaluator.getExactAlarmRequirement(requireContext())));
     }
 
     static CharSequence getLastOutcomeSummary(@NonNull Context context, @NonNull String stage) {
@@ -318,6 +322,15 @@ public class PodcastAlarmPreferencesFragment extends AnimatedPreferenceFragment
         calendar.setTimeInMillis(status.getTriggerAtMillis());
         String formattedTime = DateFormat.getTimeFormat(context).format(calendar.getTime());
         return context.getString(scheduledRes, formattedTime);
+    }
+
+    static CharSequence getExactAlarmPermissionSummary(@NonNull Context context,
+                                                       @NonNull PodcastAlarmStatusEvaluator
+                                                               .ExactAlarmRequirement requirement) {
+        if (requirement == PodcastAlarmStatusEvaluator.ExactAlarmRequirement.PLAYBACK_AND_EXACT_DOWNLOAD) {
+            return context.getString(R.string.podcast_alarm_exact_alarm_summary_playback_and_download);
+        }
+        return context.getString(R.string.podcast_alarm_exact_alarm_summary_playback_only);
     }
 
     private void openPodcastSelection() {

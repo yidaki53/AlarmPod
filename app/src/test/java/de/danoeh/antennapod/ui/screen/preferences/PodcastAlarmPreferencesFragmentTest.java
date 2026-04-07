@@ -88,4 +88,26 @@ public class PodcastAlarmPreferencesFragmentTest {
                 context.getString(de.danoeh.antennapod.R.string.podcast_alarm_next_download_lead_time_mode),
                 summary);
     }
+
+        @Test
+        public void getExactAlarmPermissionSummaryDescribesPlaybackOnlyImpact() {
+        CharSequence summary = PodcastAlarmPreferencesFragment.getExactAlarmPermissionSummary(
+            context,
+            PodcastAlarmStatusEvaluator.ExactAlarmRequirement.PLAYBACK_ONLY);
+
+        assertEquals(
+            context.getString(de.danoeh.antennapod.R.string.podcast_alarm_exact_alarm_summary_playback_only),
+            summary);
+        }
+
+        @Test
+        public void getExactAlarmPermissionSummaryDescribesPlaybackAndDownloadImpact() {
+        CharSequence summary = PodcastAlarmPreferencesFragment.getExactAlarmPermissionSummary(
+            context,
+            PodcastAlarmStatusEvaluator.ExactAlarmRequirement.PLAYBACK_AND_EXACT_DOWNLOAD);
+
+        assertEquals(
+            context.getString(de.danoeh.antennapod.R.string.podcast_alarm_exact_alarm_summary_playback_and_download),
+            summary);
+        }
 }

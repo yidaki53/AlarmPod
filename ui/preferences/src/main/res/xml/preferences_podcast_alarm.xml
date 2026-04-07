@@ -24,7 +24,7 @@
         <Preference
                 android:key="prefPodcastAlarmExactAlarmPermission"
                 android:title="@string/podcast_alarm_exact_alarm_title"
-                android:summary="@string/podcast_alarm_exact_alarm_summary"
+                android:summary="@string/podcast_alarm_exact_alarm_summary_playback_only"
                 android:visible="false" />
 
         <SwitchPreferenceCompat

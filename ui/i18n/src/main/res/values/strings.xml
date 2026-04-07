@@ -75,7 +75,8 @@
     <string name="podcast_alarm_next_download_scheduled">Scheduled for %1$s</string>
     <string name="podcast_alarm_download_notification_summary">Downloading the next alarm episode</string>
     <string name="podcast_alarm_exact_alarm_title">Allow exact alarms</string>
-    <string name="podcast_alarm_exact_alarm_summary">Required to start playback at the exact alarm time on this Android version</string>
+    <string name="podcast_alarm_exact_alarm_summary_playback_only">Required to start playback at the exact alarm time on this Android version</string>
+    <string name="podcast_alarm_exact_alarm_summary_playback_and_download">Required to start playback at the exact alarm time and to run exact-time downloads on this Android version</string>
     <string name="podcast_alarm_exact_alarm_required">Allow exact alarms before enabling the podcast alarm.</string>
     <string name="podcast_alarm_generic_alarm_summary">No playable episode was available. Playing the device alarm instead.</string>
     <string name="podcast_alarm_stop_action">Stop</string>
