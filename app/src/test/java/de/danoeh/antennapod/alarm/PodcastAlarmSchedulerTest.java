@@ -1,11 +1,25 @@
 package de.danoeh.antennapod.alarm;
 
+import android.app.AlarmManager;
+import android.content.Context;
+
+import androidx.preference.PreferenceManager;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.work.Configuration;
+import androidx.work.WorkManager;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.Shadows;
+import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowAlarmManager;
 
 import java.util.Calendar;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import de.danoeh.antennapod.storage.preferences.PodcastAlarmPreferences;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -114,5 +128,57 @@ public class PodcastAlarmSchedulerTest {
 
         assertFalse(prefetchPlan.schedulesWork());
         assertFalse(prefetchPlan.schedulesExactDownload());
+    }
+
+    @Test
+    @Config(sdk = android.os.Build.VERSION_CODES.R)
+    public void scheduleCancelsStaleExactDownloadAlarmWhenSwitchingBackToLeadTimeMode() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        initializeWorkManager(context);
+        PodcastAlarmPreferences.init(context);
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putBoolean(PodcastAlarmPreferences.PREF_ENABLED, true)
+                .putLong(PodcastAlarmPreferences.PREF_FEED_ID, 42L)
+                .putInt(PodcastAlarmPreferences.PREF_HOUR, 8)
+                .putInt(PodcastAlarmPreferences.PREF_MINUTE, 0)
+                .putBoolean(PodcastAlarmPreferences.PREF_PREFETCH_ENABLED, true)
+                .putString(PodcastAlarmPreferences.PREF_PREFETCH_MODE, PodcastAlarmPreferences.PREFETCH_MODE_EXACT_TIME)
+                .putString(PodcastAlarmPreferences.PREF_PREFETCH_MINUTES, "30")
+                .putInt(PodcastAlarmPreferences.PREF_DOWNLOAD_HOUR, 7)
+                .putInt(PodcastAlarmPreferences.PREF_DOWNLOAD_MINUTE, 0)
+                .apply();
+
+        PodcastAlarmScheduler.schedule(context);
+
+        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+        ShadowAlarmManager shadowAlarmManager = Shadows.shadowOf(alarmManager);
+        assertEquals(2, countScheduledServiceAlarms(shadowAlarmManager.getScheduledAlarms()));
+
+        PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putString(PodcastAlarmPreferences.PREF_PREFETCH_MODE, PodcastAlarmPreferences.PREFETCH_MODE_LEAD_TIME)
+                .apply();
+
+        PodcastAlarmScheduler.schedule(context);
+
+        assertEquals(1, countScheduledServiceAlarms(shadowAlarmManager.getScheduledAlarms()));
+    }
+
+    private static void initializeWorkManager(Context context) {
+        try {
+            WorkManager.initialize(context, new Configuration.Builder().build());
+        } catch (IllegalStateException ignored) {
+        }
+    }
+
+    private static int countScheduledServiceAlarms(List<ShadowAlarmManager.ScheduledAlarm> alarms) {
+        int count = 0;
+        for (ShadowAlarmManager.ScheduledAlarm alarm : alarms) {
+            if (alarm.operation != null) {
+                count++;
+            }
+        }
+        return count;
     }
 }

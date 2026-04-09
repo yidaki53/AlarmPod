@@ -123,6 +123,7 @@ public final class PodcastAlarmScheduler {
 
     private static void schedulePrefetch(@NonNull Context context, long triggerAtMillis) {
         cancelPrefetch(context);
+        cancelExactDownload(context);
         long feedId = PodcastAlarmPreferences.getSelectedFeedId();
         PrefetchPlan prefetchPlan = getPrefetchPlan(
                 System.currentTimeMillis(),
@@ -189,6 +190,14 @@ public final class PodcastAlarmScheduler {
         alarmManager.cancel(pendingIntent);
         long downloadTriggerAtMillis = getNextDownloadTriggerAtMillis(System.currentTimeMillis());
         alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, downloadTriggerAtMillis, pendingIntent);
+    }
+
+    private static void cancelExactDownload(@NonNull Context context) {
+        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+        if (alarmManager == null) {
+            return;
+        }
+        alarmManager.cancel(getDownloadTriggerPendingIntent(context));
     }
 
     private static void cancelPrefetch(@NonNull Context context) {

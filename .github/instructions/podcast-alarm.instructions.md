@@ -8,6 +8,7 @@ applyTo: "app/src/main/java/de/danoeh/antennapod/alarm/**/*.java,app/src/main/ja
 - The current design is one global daily podcast alarm, not per-feed alarms.
 - The user selects exactly one subscribed podcast feed and one alarm time.
 - The dedicated UI entry point lives under playback settings and opens its own preference screen.
+- Keep podcast alarm changes inside the alarm functionality and its directly required integration points whenever possible so the branch stays easy to rebase onto upstream AntennaPod changes.
 
 ## Storage and initialization
 - Global alarm state is stored in `PodcastAlarmPreferences` under the `:storage:preferences` module.
