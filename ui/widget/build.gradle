@@ -5,10 +5,10 @@ apply from: "../../common.gradle"
 apply from: "../../playFlavor.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.ui.widget"
+    namespace = "de.danoeh.antennapod.ui.widget"
 
     defaultConfig {
-        vectorDrawables.useSupportLibrary false
+        vectorDrawables.useSupportLibrary = false
         vectorDrawables.generatedDensities = ["xhdpi"]
     }
 

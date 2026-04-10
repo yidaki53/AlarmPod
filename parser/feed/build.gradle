@@ -4,7 +4,7 @@ plugins {
 apply from: "../../common.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.parser.feed"
+    namespace = "de.danoeh.antennapod.parser.feed"
 }
 
 dependencies {

@@ -4,7 +4,7 @@ plugins {
 apply from: "../common.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.event"
+    namespace = "de.danoeh.antennapod.event"
 }
 
 dependencies {
