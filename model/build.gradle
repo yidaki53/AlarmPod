@@ -4,7 +4,7 @@ plugins {
 apply from: "../common.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.model"
+    namespace = "de.danoeh.antennapod.model"
 
     lint {
         disable 'ParcelClassLoader'

@@ -17,7 +17,6 @@ import androidx.core.util.Consumer;
 import androidx.media3.session.MediaController;
 import androidx.media3.session.SessionToken;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import de.danoeh.antennapod.playback.base.BuildConfig;
 import de.danoeh.antennapod.playback.service.internal.PlayableUtils;
 import de.danoeh.antennapod.model.playback.TimerValue;
@@ -516,19 +515,25 @@ public abstract class PlaybackController {
     }
 
     public static void bindToMedia3Service(Context context, Consumer<MediaController> consumer) {
-        SessionToken sessionToken = new SessionToken(context,
-                new ComponentName(context, Media3PlaybackService.class));
-        ListenableFuture<MediaController> controllerFuture =
-                new MediaController.Builder(context, sessionToken).buildAsync();
-        controllerFuture.addListener(() -> {
-            try {
-                MediaController controller = controllerFuture.get();
-                consumer.accept(controller);
-                controller.release();
-            } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
-        }, MoreExecutors.directExecutor());
+        Context appContext = context.getApplicationContext();
+        ContextCompat.getMainExecutor(appContext).execute(() -> {
+            SessionToken sessionToken = new SessionToken(appContext,
+                    new ComponentName(appContext, Media3PlaybackService.class));
+            ListenableFuture<MediaController> controllerFuture =
+                    new MediaController.Builder(appContext, sessionToken).buildAsync();
+            controllerFuture.addListener(() -> {
+                try {
+                    MediaController controller = controllerFuture.get();
+                    consumer.accept(controller);
+                    controller.release();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }, ContextCompat.getMainExecutor(appContext));
+        });
 
     }
 }

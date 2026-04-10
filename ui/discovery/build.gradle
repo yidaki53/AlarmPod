@@ -5,7 +5,7 @@ apply from: "../../common.gradle"
 apply from: "../../playFlavor.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.ui.discovery"
+    namespace = "de.danoeh.antennapod.ui.discovery"
 }
 
 dependencies {

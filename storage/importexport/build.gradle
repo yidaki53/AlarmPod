@@ -5,7 +5,7 @@ apply from: "../../common.gradle"
 apply from: "../../playFlavor.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.storage.importexport"
+    namespace = "de.danoeh.antennapod.storage.importexport"
 }
 
 dependencies {

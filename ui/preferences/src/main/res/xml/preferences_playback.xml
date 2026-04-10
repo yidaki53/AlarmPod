@@ -35,6 +35,10 @@
 
     <PreferenceCategory android:title="@string/playback_control">
         <Preference
+                android:key="prefPodcastAlarmLauncher"
+                android:summary="@string/podcast_alarm_summary"
+                android:title="@string/podcast_alarm_title"/>
+        <Preference
                 android:key="prefPlaybackFastForwardDeltaLauncher"
                 android:summary="@string/pref_fast_forward_sum"
                 android:title="@string/pref_fast_forward"/>

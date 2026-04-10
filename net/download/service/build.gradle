@@ -1,12 +1,11 @@
 plugins {
     id("com.android.library")
-    id("java-test-fixtures")
 }
 apply from: "../../../common.gradle"
 apply from: "../../../playFlavor.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.net.download.service"
+    namespace = "de.danoeh.antennapod.net.download.service"
 }
 
 dependencies {

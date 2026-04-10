@@ -28,5 +28,7 @@ gradle.properties
 *.keystore
 *.p12
 .vscode
+.github/copilot-instructions.md
+.github/instructions/android-local-toolchain.instructions.md
 .cursor
 *.hprof
