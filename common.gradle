@@ -69,10 +69,10 @@ dependencies {
 
 tasks.withType(Test).configureEach {
     testLogging {
-        exceptionFormat "full"
+        exceptionFormat = "full"
         events "skipped", "passed", "failed"
-        showStandardStreams true
-        displayGranularity 2
+        showStandardStreams = true
+        displayGranularity = 2
     }
 }
 
