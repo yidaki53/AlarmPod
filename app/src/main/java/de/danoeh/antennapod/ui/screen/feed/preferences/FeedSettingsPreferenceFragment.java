@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.databinding.PlaybackSpeedFeedSettingDialogBinding;
+import de.danoeh.antennapod.event.MessageEvent;
 import de.danoeh.antennapod.event.settings.SkipIntroEndingChangedEvent;
 import de.danoeh.antennapod.event.settings.SpeedPresetChangedEvent;
 import de.danoeh.antennapod.event.settings.VolumeAdaptionChangedEvent;
@@ -34,6 +35,7 @@ import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.preferences.screen.synchronization.AuthenticationDialog;
+import de.danoeh.antennapod.ui.screen.feed.RenameFeedDialog;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.MaybeOnSubscribe;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -54,11 +56,11 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
     private static final String PREF_SCREEN = "feedSettingsScreen";
     private static final String PREF_AUTHENTICATION = "authentication";
     private static final String PREF_AUTO_DELETE = "autoDelete";
-    private static final String PREF_CATEGORY_AUTO_DOWNLOAD = "autoDownloadCategory";
     private static final String PREF_NEW_EPISODES_ACTION = "feedNewEpisodesAction";
     private static final String PREF_FEED_PLAYBACK_SPEED = "feedPlaybackSpeed";
     private static final String PREF_AUTO_SKIP = "feedAutoSkip";
     private static final String PREF_NOTIFICATION = "episodeNotification";
+    private static final String PREF_RENAME = "rename";
     private static final String PREF_TAGS = "tags";
 
     private Feed feed;
@@ -130,7 +132,8 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
 
                     if (feed.isLocalFeed()) {
                         findPreference(PREF_AUTHENTICATION).setVisible(false);
-                        findPreference(PREF_CATEGORY_AUTO_DOWNLOAD).setVisible(false);
+                        findPreference(PREF_AUTODOWNLOAD).setVisible(false);
+                        findPreference(PREF_EPISODE_FILTER).setVisible(false);
                     }
 
                     findPreference(PREF_SCREEN).setVisible(true);
@@ -211,6 +214,14 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             EventBus.getDefault().post(new VolumeAdaptionChangedEvent(newSetting, feed.getId()));
             return false;
         });
+        findPreference(PREF_NEW_EPISODES_ACTION).setOnPreferenceClickListener(preference -> {
+            boolean isAutoDownload = feed.getPreferences().isAutoDownload(UserPreferences.isEnableAutodownloadGlobal());
+            if (isAutoDownload && !feed.isLocalFeed()) {
+                EventBus.getDefault().post(new MessageEvent(getString(R.string.feed_new_episodes_action_snackbar)));
+                return true;
+            }
+            return false;
+        });
         findPreference(PREF_NEW_EPISODES_ACTION).setOnPreferenceChangeListener((preference, newValue) -> {
             int code = Integer.parseInt((String) newValue);
             feedPreferences.setNewEpisodesAction(FeedPreferences.NewEpisodesAction.fromCode(code));
@@ -254,6 +265,10 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             notificationPreference.setChecked(checked);
             return false;
         });
+        findPreference(PREF_RENAME).setOnPreferenceClickListener(preference -> {
+            new RenameFeedDialog(getActivity(), feed).show();
+            return true;
+        });
     }
 
     private void updateAutoDeleteSummary() {
@@ -278,7 +293,6 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
         ListPreference newEpisodesAction = findPreference(PREF_NEW_EPISODES_ACTION);
         boolean isAutoDownload = feed.getPreferences().isAutoDownload(UserPreferences.isEnableAutodownloadGlobal());
         if (isAutoDownload && !feed.isLocalFeed()) {
-            newEpisodesAction.setEnabled(false);
             newEpisodesAction.setSummary(R.string.feed_new_episodes_action_summary_autodownload);
             return;
         }
@@ -303,7 +317,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             return;
         }
         boolean enabled = feed.getPreferences().isAutoDownload(UserPreferences.isEnableAutodownloadGlobal());
-        findPreference(PREF_EPISODE_FILTER).setEnabled(enabled);
+        findPreference(PREF_EPISODE_FILTER).setVisible(enabled);
         ListPreference autoDownloadPreference = findPreference(PREF_AUTODOWNLOAD);
         String summary = switch (feedPreferences.getAutoDownload()) {
             case GLOBAL -> getString(R.string.global_default_with_value,

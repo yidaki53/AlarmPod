@@ -5,17 +5,15 @@ apply from: "../../common.gradle"
 apply from: "../../playFlavor.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.ui.preferences"
+    namespace = "de.danoeh.antennapod.ui.preferences"
 
     defaultConfig {
         def commit = ""
         try {
-            def hashStdOut = new ByteArrayOutputStream()
-            exec {
+            def execOutput = providers.exec {
                 commandLine "git", "rev-parse", "--short", "HEAD"
-                standardOutput = hashStdOut
             }
-            commit = hashStdOut.toString().trim()
+            commit = execOutput.standardOutput.asText.get().trim()
         } catch (Exception ignore) {
         }
         buildConfigField "String", "COMMIT_HASH", ('"' + (commit.isEmpty() ? "Unknown commit" : commit) + '"')
@@ -47,5 +45,5 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:$okhttpVersion"
     implementation "com.squareup.okhttp3:okhttp-urlconnection:$okhttpVersion"
     implementation "org.greenrobot:eventbus:$eventbusVersion"
-    implementation 'com.github.ByteHamster:SearchPreference:2.7.3'
+    implementation 'com.bytehamster:lib.preferencesearch:2.7.3'
 }

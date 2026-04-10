@@ -104,8 +104,7 @@ public class MainPreferencesFragment extends AnimatedPreferenceFragment {
                 }
         );
         findPreference(PREF_DOCUMENTATION).setOnPreferenceClickListener(preference -> {
-            IntentUtils.openInBrowser(getContext(),
-                    IntentUtils.getLocalizedWebsiteLink(getContext()) + "/documentation/");
+            IntentUtils.openInBrowser(getContext(), "https://antennapod.org/documentation/");
             return true;
         });
         findPreference(PREF_VIEW_FORUM).setOnPreferenceClickListener(preference -> {
@@ -113,8 +112,7 @@ public class MainPreferencesFragment extends AnimatedPreferenceFragment {
             return true;
         });
         findPreference(PREF_CONTRIBUTE).setOnPreferenceClickListener(preference -> {
-            IntentUtils.openInBrowser(getContext(),
-                    IntentUtils.getLocalizedWebsiteLink(getContext()) + "/contribute/");
+            IntentUtils.openInBrowser(getContext(), "https://antennapod.org/contribute/");
             return true;
         });
         findPreference(PREF_SEND_BUG_REPORT).setOnPreferenceClickListener(preference -> {
@@ -136,6 +134,9 @@ public class MainPreferencesFragment extends AnimatedPreferenceFragment {
                 .addBreadcrumb(PreferenceActivity.getTitleOfPage(R.xml.preferences_user_interface));
         config.index(R.xml.preferences_playback)
                 .addBreadcrumb(PreferenceActivity.getTitleOfPage(R.xml.preferences_playback));
+        config.index(R.xml.preferences_podcast_alarm)
+                .addBreadcrumb(PreferenceActivity.getTitleOfPage(R.xml.preferences_playback))
+                .addBreadcrumb(PreferenceActivity.getTitleOfPage(R.xml.preferences_podcast_alarm));
         config.index(R.xml.preferences_downloads)
                 .addBreadcrumb(PreferenceActivity.getTitleOfPage(R.xml.preferences_downloads));
         config.index(R.xml.preferences_import_export)

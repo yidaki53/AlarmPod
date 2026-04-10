@@ -5,7 +5,7 @@ apply from: "../../common.gradle"
 apply from: "../../playFlavor.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.playback.cast"
+    namespace = "de.danoeh.antennapod.playback.cast"
 }
 
 dependencies {
@@ -21,4 +21,6 @@ dependencies {
 
     playApi 'androidx.mediarouter:mediarouter:1.3.0'
     playApi 'com.google.android.gms:play-services-cast-framework:21.2.0'
+    implementation "androidx.media3:media3-exoplayer:$media3Version"
+    playImplementation "androidx.media3:media3-cast:$media3Version"
 }

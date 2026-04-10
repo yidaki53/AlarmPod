@@ -5,7 +5,7 @@ apply from: "../../common.gradle"
 apply from: "../../playFlavor.gradle"
 
 android {
-    namespace "de.danoeh.antennapod.net.discovery"
+    namespace = "de.danoeh.antennapod.net.discovery"
 
     defaultConfig {
         if (project.hasProperty("podcastindexApiKey")) {
@@ -25,8 +25,6 @@ dependencies {
     implementation project(':ui:i18n')
 
     annotationProcessor "androidx.annotation:annotation:$annotationVersion"
-
-    implementation 'com.github.mfietz:fyydlin:e1d25f347641fe5e26c4c2b9756d4e9001a398dd'
 
     implementation "io.reactivex.rxjava3:rxandroid:$rxAndroidVersion"
     implementation "io.reactivex.rxjava3:rxjava:$rxJavaVersion"

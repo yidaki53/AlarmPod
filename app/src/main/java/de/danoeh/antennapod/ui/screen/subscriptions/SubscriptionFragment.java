@@ -36,7 +36,7 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.MenuItemUtils;
 import de.danoeh.antennapod.ui.screen.AddFeedFragment;
 import de.danoeh.antennapod.ui.screen.SearchFragment;
-import de.danoeh.antennapod.ui.statistics.StatisticsFragment;
+
 import de.danoeh.antennapod.ui.view.EmptyViewHandler;
 import de.danoeh.antennapod.ui.view.FloatingSelectMenu;
 import de.danoeh.antennapod.ui.view.ItemOffsetDecoration;
@@ -145,9 +145,10 @@ public class SubscriptionFragment extends Fragment
         subscriptionRecycler.addOnScrollListener(new LiftOnScrollListener(collapsingContainer));
         subscriptionAdapter = new SubscriptionsRecyclerAdapter((MainActivity) getActivity()) {
             @Override
-            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                super.onCreateContextMenu(menu, v, menuInfo);
-                MenuItemUtils.setOnClickListeners(menu, SubscriptionFragment.this::onContextItemSelected);
+            protected void onSelectedItemsUpdated() {
+                super.onSelectedItemsUpdated();
+                FeedMenuHandler.onPrepareMenu(floatingSelectMenu.getMenu(), getSelectedItems());
+                floatingSelectMenu.updateItemVisibility();
             }
         };
         setColumnNumber(prefs.getInt(PREF_NUM_COLUMNS, getDefaultNumOfColumns()));
@@ -193,8 +194,12 @@ public class SubscriptionFragment extends Fragment
             subscriptionAddButton.setVisibility(View.GONE);
         }
         floatingSelectMenu.setOnMenuItemClickListener(menuItem -> {
-            new FeedMultiSelectActionHandler(getActivity(), subscriptionAdapter.getSelectedItems())
+            List<Feed> selection = subscriptionAdapter.getSelectedItems();
+            new FeedMultiSelectActionHandler(getActivity(), selection)
                     .handleAction(menuItem.getItemId());
+            if (selection.size() <= 1) {
+                subscriptionAdapter.endSelectMode();
+            }
             return true;
         });
 
@@ -279,9 +284,6 @@ public class SubscriptionFragment extends Fragment
             } else {
                 ((MainActivity) getActivity()).loadChildFragment(SearchFragment.newInstance());
             }
-            return true;
-        } else if (itemId == R.id.action_statistics) {
-            ((MainActivity) getActivity()).loadChildFragment(new StatisticsFragment());
             return true;
         } else if (itemId == R.id.pref_show_subscription_title) {
             item.setChecked(!item.isChecked());
@@ -463,18 +465,6 @@ public class SubscriptionFragment extends Fragment
             return false;
         }
         return TagMenuHandler.onMenuItemClicked(this, selectedTag, item, tagAdapter);
-    }
-
-    @Override
-    public boolean onContextItemSelected(@NonNull MenuItem item) {
-        Feed selectedFeed = subscriptionAdapter.getSelectedItem();
-        if (selectedFeed == null) {
-            return false;
-        }
-        if (item.getItemId() == R.id.multi_select) {
-            return subscriptionAdapter.onContextItemSelected(item);
-        }
-        return FeedMenuHandler.onMenuItemClicked(this, item.getItemId(), selectedFeed, this::loadSubscriptionsAndTags);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

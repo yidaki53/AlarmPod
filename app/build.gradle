@@ -6,14 +6,20 @@ apply from: "../common.gradle"
 apply from: "../playFlavor.gradle"
 
 android {
-    namespace "de.danoeh.antennapod"
+    namespace = "de.danoeh.antennapod"
 
     defaultConfig {
+        def overriddenVersionCode = project.findProperty("versionCodeOverride")
+        def overriddenVersionName = project.findProperty("versionNameOverride")
+
         // Version code schema:
         // "1.2.3-beta4"    -> 1020304
         // "1.2.3"          -> 1020395
-        versionCode 3110395
-        versionName "3.11.3"
+        versionCode = overriddenVersionCode != null ? overriddenVersionCode.toInteger() : 3110395
+        versionName = overriddenVersionName != null ? overriddenVersionName.toString() : "3.11.3"
+        buildConfigField "boolean", "FORK_UPDATES_ENABLED", "true"
+        buildConfigField "String", "FORK_RELEASES_API_URL", '"https://api.github.com/repos/yidaki53/AlarmPod/releases/latest"'
+        buildConfigField "String", "FORK_RELEASES_PAGE_URL", '"https://github.com/yidaki53/AlarmPod/releases/latest"'
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -24,8 +30,8 @@ android {
 
     signingConfigs {
         releaseConfig {
-            enableV1Signing true
-            enableV2Signing true
+            enableV1Signing = true
+            enableV2Signing = true
             storeFile file(project.getProperties().getOrDefault("releaseStoreFile", "keystore"))
             storePassword project.getProperties().getOrDefault("releaseStorePassword", "password")
             keyAlias project.getProperties().getOrDefault("releaseKeyAlias", "alias")
@@ -40,9 +46,9 @@ android {
         }
         release {
             resValue "string", "provider_authority", "de.danoeh.antennapod.provider"
-            minifyEnabled true
-            shrinkResources true
-            signingConfig signingConfigs.releaseConfig
+            minifyEnabled = true
+            shrinkResources = true
+            signingConfig = signingConfigs.releaseConfig
         }
     }
 
@@ -107,6 +113,9 @@ dependencies {
     implementation "androidx.work:work-runtime:$workManagerVersion"
     implementation "com.google.android.material:material:$googleMaterialVersion"
     implementation "androidx.drawerlayout:drawerlayout:1.2.0"
+    implementation "androidx.media3:media3-common:$media3Version"
+    implementation "androidx.media3:media3-session:$media3Version"
+    implementation "androidx.media3:media3-ui:$media3Version"
 
     implementation "org.apache.commons:commons-lang3:$commonslangVersion"
     implementation "commons-io:commons-io:$commonsioVersion"
@@ -118,10 +127,9 @@ dependencies {
     annotationProcessor "org.greenrobot:eventbus-annotation-processor:$eventbusVersion"
     implementation "io.reactivex.rxjava3:rxandroid:$rxAndroidVersion"
     implementation "io.reactivex.rxjava3:rxjava:$rxJavaVersion"
-
-    implementation 'com.github.ByteHamster:SearchPreference:v2.5.0'
+    implementation 'com.bytehamster:lib.preferencesearch:2.7.3'
     implementation 'com.github.skydoves:balloon:1.5.3'
-    implementation 'com.github.xabaras:RecyclerViewSwipeDecorator:1.3'
+    implementation 'it.xabaras.android:recyclerview-swipedecorator:1.4'
 
     testImplementation "androidx.test:core:$testCoreVersion"
     testImplementation "junit:junit:$junitVersion"

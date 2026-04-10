@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/podcast_alarm_title">
+        <Preference
+                android:key="prefPodcastAlarmFeedId"
+                android:title="@string/podcast_alarm_choose_podcast"
+                android:summary="@string/podcast_alarm_no_podcast_selected" />
+
+        <Preference
+                android:key="prefPodcastAlarmTime"
+                android:title="@string/podcast_alarm_time_title" />
+
+        <Preference
+                android:key="prefPodcastAlarmNextPlayback"
+                android:selectable="false"
+                android:title="@string/podcast_alarm_next_playback_title" />
+
+        <Preference
+                android:key="prefPodcastAlarmLastOutcome"
+                android:selectable="false"
+                android:title="@string/podcast_alarm_last_outcome_title" />
+
+        <Preference
+                android:key="prefPodcastAlarmExactAlarmPermission"
+                android:title="@string/podcast_alarm_exact_alarm_title"
+                android:summary="@string/podcast_alarm_exact_alarm_summary_playback_only"
+                android:visible="false" />
+
+        <SwitchPreferenceCompat
+                android:key="prefPodcastAlarmEnabled"
+                android:defaultValue="false"
+                android:title="@string/podcast_alarm_enabled_title"
+                android:summary="@string/podcast_alarm_enabled_summary" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/automation">
+        <SwitchPreferenceCompat
+                android:key="prefPodcastAlarmPrefetchEnabled"
+                android:defaultValue="false"
+                android:title="@string/podcast_alarm_prefetch_title"
+                android:summary="@string/podcast_alarm_prefetch_summary" />
+
+        <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
+                android:key="prefPodcastAlarmPrefetchMode"
+                android:defaultValue="lead_time"
+                android:dependency="prefPodcastAlarmPrefetchEnabled"
+                android:entries="@array/podcast_alarm_download_mode_entries"
+                android:entryValues="@array/podcast_alarm_download_mode_values"
+                android:title="@string/podcast_alarm_download_mode_title" />
+
+        <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
+                android:key="prefPodcastAlarmPrefetchMinutes"
+                android:defaultValue="60"
+                android:dependency="prefPodcastAlarmPrefetchEnabled"
+                android:entries="@array/podcast_alarm_prefetch_entries"
+                android:entryValues="@array/podcast_alarm_prefetch_values"
+                android:title="@string/podcast_alarm_prefetch_time_title" />
+
+        <Preference
+                android:key="prefPodcastAlarmDownloadTime"
+                android:dependency="prefPodcastAlarmPrefetchEnabled"
+                android:title="@string/podcast_alarm_download_time_title" />
+
+        <Preference
+                android:key="prefPodcastAlarmNextDownload"
+                android:selectable="false"
+                android:title="@string/podcast_alarm_next_download_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

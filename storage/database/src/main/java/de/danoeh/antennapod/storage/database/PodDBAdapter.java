@@ -11,8 +11,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Build;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -43,6 +41,7 @@ import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.mapper.FeedItemFilterQuery;
 import de.danoeh.antennapod.storage.database.mapper.FeedItemSortQuery;
 
+import de.danoeh.antennapod.system.utils.ThreadUtils;
 import org.apache.commons.io.FileUtils;
 
 import static de.danoeh.antennapod.model.feed.FeedPreferences.SPEED_USE_GLOBAL;
@@ -395,24 +394,8 @@ public class PodDBAdapter {
         return newDb;
     }
 
-    private boolean isTest() {
-        if ("robolectric".equals(Build.FINGERPRINT)) {
-            return true;
-        }
-        try {
-            Class.forName("org.junit.Test");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
-
     public synchronized PodDBAdapter open() {
-        if (BuildConfig.DEBUG) {
-            if (Looper.myLooper() == Looper.getMainLooper() && !isTest()) {
-                throw new RuntimeException("I/O on main thread");
-            }
-        }
+        ThreadUtils.assertNotMainThread();
         // do nothing
         return this;
     }
@@ -547,6 +530,7 @@ public class PodDBAdapter {
 
     /**
      * Inserts or updates a media entry
+     * Use carefully to avoid overwriting properties with stale data.
      *
      * @return the id of the entry
      */
@@ -577,6 +561,24 @@ public class PodDBAdapter {
                     new String[]{String.valueOf(media.getId())});
         }
         return media.getId();
+    }
+
+    /**
+     * Update download state related properties of the feed media.
+     */
+    public void setMediaDownloadInformation(FeedMedia media) {
+        if (media.getId() != 0) {
+            ContentValues values = new ContentValues();
+            values.put(KEY_SIZE, media.getSize());
+            values.put(KEY_FILE_URL, media.getLocalFileUrl());
+            values.put(KEY_DOWNLOAD_URL, media.getDownloadUrl());
+            values.put(KEY_DOWNLOAD_DATE, media.getDownloadDate());
+            values.put(KEY_HAS_EMBEDDED_PICTURE, media.hasEmbeddedPicture());
+            db.update(TABLE_NAME_FEED_MEDIA, values, KEY_ID + "=?",
+                    new String[]{String.valueOf(media.getId())});
+        } else {
+            Log.e(TAG, "setMediaDownloadInformation: ID of media was 0");
+        }
     }
 
     public void setFeedMediaPlaybackInformation(FeedMedia media) {
@@ -747,45 +749,28 @@ public class PodDBAdapter {
         return item.getId();
     }
 
-    public void setFeedItemRead(FeedItem item, int played, boolean resetMediaPosition) {
-        try {
-            db.beginTransactionNonExclusive();
-            ContentValues values = new ContentValues();
-
-            values.put(KEY_READ, played);
-            db.update(TABLE_NAME_FEED_ITEMS, values, KEY_ID + "=?", new String[]{String.valueOf(item.getId())});
-            item.setPlayed(played == FeedItem.PLAYED);
-
-            if (resetMediaPosition && item.hasMedia()) {
-                values.clear();
-                values.put(KEY_POSITION, 0);
-                db.update(TABLE_NAME_FEED_MEDIA, values, KEY_ID + "=?",
-                        new String[]{String.valueOf(item.getMedia().getId())});
-                item.getMedia().setPosition(0);
-            }
-
-            db.setTransactionSuccessful();
-        } catch (SQLException e) {
-            Log.e(TAG, Log.getStackTraceString(e));
-        } finally {
-            db.endTransaction();
-        }
-    }
-
     /**
      * Sets the 'read' attribute of the item.
      *
-     * @param read    must be one of FeedItem.PLAYED, FeedItem.NEW, FeedItem.UNPLAYED
-     * @param itemIds items to change the value of
+     * @param played             New read status of items. See @FeedItem
+     * @param resetMediaPosition Should the postition of the media item be reset?
+     * @param items              Array of items to upgrade
      */
-    public void setFeedItemRead(int read, long... itemIds) {
+    public void setFeedItemRead(int played, boolean resetMediaPosition, FeedItem... items) {
         try {
             db.beginTransactionNonExclusive();
             ContentValues values = new ContentValues();
-            for (long id : itemIds) {
+            for (FeedItem item : items) {
                 values.clear();
-                values.put(KEY_READ, read);
-                db.update(TABLE_NAME_FEED_ITEMS, values, KEY_ID + "=?", new String[]{String.valueOf(id)});
+                values.put(KEY_READ, played);
+                db.update(TABLE_NAME_FEED_ITEMS, values, KEY_ID + "=?", new String[]{String.valueOf(item.getId())});
+
+                if (resetMediaPosition && item.hasMedia()) {
+                    values.clear();
+                    values.put(KEY_POSITION, 0);
+                    db.update(TABLE_NAME_FEED_MEDIA, values, KEY_ID + "=?",
+                            new String[]{String.valueOf(item.getMedia().getId())});
+                }
             }
             db.setTransactionSuccessful();
         } catch (SQLException e) {
@@ -902,10 +887,9 @@ public class PodDBAdapter {
     private boolean isItemInFavorites(FeedItem item) {
         String query = String.format(Locale.US, "SELECT %s from %s WHERE %s=%d",
                 KEY_ID, TABLE_NAME_FAVORITES, KEY_FEEDITEM, item.getId());
-        Cursor c = db.rawQuery(query, null);
-        int count = c.getCount();
-        c.close();
-        return count > 0;
+        try (Cursor c = db.rawQuery(query, null)) {
+            return c.getCount() > 0;
+        }
     }
 
     public void setQueue(List<FeedItem> queue) {
@@ -1017,8 +1001,9 @@ public class PodDBAdapter {
         return db.rawQuery(query, null);
     }
 
-    public final Cursor getFeedCursorDownloadUrls() {
-        return db.query(TABLE_NAME_FEEDS, new String[]{KEY_ID, KEY_DOWNLOAD_URL}, null, null, null, null, null);
+    public final Cursor getFeedCursorDownloadUrls(boolean subscribedOnly) {
+        String selection = subscribedOnly ? KEY_STATE + "=" + Feed.STATE_SUBSCRIBED : null;
+        return db.query(TABLE_NAME_FEEDS, new String[]{KEY_ID, KEY_DOWNLOAD_URL}, selection, null, null, null, null);
     }
 
     /**
@@ -1316,13 +1301,12 @@ public class PodDBAdapter {
 
     public int getQueueSize() {
         final String query = String.format("SELECT COUNT(%s) FROM %s", KEY_ID, TABLE_NAME_QUEUE);
-        Cursor c = db.rawQuery(query, null);
-        int result = 0;
-        if (c.moveToFirst()) {
-            result = c.getInt(0);
+        try (Cursor c = db.rawQuery(query, null)) {
+            if (c.moveToFirst()) {
+                return c.getInt(0);
+            }
+            return 0;
         }
-        c.close();
-        return result;
     }
 
     public final Map<Long, Integer> getFeedCounters(FeedCounter setting, long... feedIds) {
@@ -1375,16 +1359,17 @@ public class PodDBAdapter {
                 + " WHERE " + limitFeeds + " "
                 + whereRead + " GROUP BY " + KEY_FEED;
 
-        Cursor c = db.rawQuery(query, null);
         Map<Long, Integer> result = new HashMap<>();
-        if (c.moveToFirst()) {
+        try (Cursor c = db.rawQuery(query, null)) {
+            if (!c.moveToFirst()) {
+                return result;
+            }
             do {
                 long feedId = c.getLong(0);
                 int count = c.getInt(1);
                 result.put(feedId, count);
             } while (c.moveToNext());
         }
-        c.close();
         return result;
     }
 
@@ -1399,16 +1384,17 @@ public class PodDBAdapter {
                 + " FROM " + TABLE_NAME_FEED_ITEMS
                 + " GROUP BY " + KEY_FEED;
 
-        Cursor c = db.rawQuery(query, null);
         Map<Long, Long> result = new HashMap<>();
-        if (c.moveToFirst()) {
+        try (Cursor c = db.rawQuery(query, null)) {
+            if (!c.moveToFirst()) {
+                return result;
+            }
             do {
                 long feedId = c.getLong(0);
                 long date = c.getLong(1);
                 result.put(feedId, date);
             } while (c.moveToNext());
         }
-        c.close();
         return result;
     }
 
