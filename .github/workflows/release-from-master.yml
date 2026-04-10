@@ -1,22 +1,25 @@
-name: Release From Develop
+name: Release From Master
 
 on:
+  push:
+    branches: [ master ]
   workflow_dispatch:
     inputs:
-      prerelease:
-        description: Mark the GitHub release as a prerelease
-        required: true
-        default: true
-        type: boolean
       default_bump:
         description: Fallback bump when labels and Conventional Commit signals are absent
         required: true
         default: patch
         type: choice
         options:
+          - none
           - patch
           - minor
           - major
+      prerelease:
+        description: Mark the GitHub release as a prerelease
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -31,7 +34,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: develop
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'master' || github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -49,10 +52,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          DEFAULT_BUMP: ${{ github.event.inputs.default_bump }}
+          DEFAULT_BUMP: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.default_bump || 'none' }}
         run: python scripts/compute_next_release.py
 
+      - name: Skip non-release push
+        if: steps.next_version.outputs.should_release != 'true'
+        run: echo "No feature/fix/breaking-change bump detected; skipping release."
+
       - name: Cache Gradle
+        if: steps.next_version.outputs.should_release == 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -61,20 +69,25 @@ jobs:
           key: gradle-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
 
       - name: Configure parallel build
+        if: steps.next_version.outputs.should_release == 'true'
         run: echo "org.gradle.parallel=true" >> local.properties
 
       - name: Create temporary release keystore
+        if: steps.next_version.outputs.should_release == 'true'
         run: keytool -noprompt -genkey -v -keystore "app/keystore" -alias alias -storepass password -keypass password -keyalg RSA -validity 10 -dname "CN=antennapod.org, OU=dummy, O=dummy, L=dummy, S=dummy, C=US"
 
       - name: Build versioned PlayRelease APK
+        if: steps.next_version.outputs.should_release == 'true'
         run: ./gradlew -PversionNameOverride=${{ steps.next_version.outputs.version }} -PversionCodeOverride=${{ steps.next_version.outputs.version_code }} assemblePlayRelease
 
       - name: Prepare release asset
+        if: steps.next_version.outputs.should_release == 'true'
         run: |
           mkdir -p release-assets
           cp app/build/outputs/apk/play/release/app-play-release.apk release-assets/AlarmPod-v${{ steps.next_version.outputs.version }}-play-release.apk
 
       - name: Upload release artifact
+        if: steps.next_version.outputs.should_release == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: release-apk-v${{ steps.next_version.outputs.version }}
@@ -82,11 +95,12 @@ jobs:
           if-no-files-found: error
 
       - name: Create GitHub release
+        if: steps.next_version.outputs.should_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.next_version.outputs.version }}
-          target_commitish: develop
+          target_commitish: master
           name: AlarmPod v${{ steps.next_version.outputs.version }}
           generate_release_notes: true
-          prerelease: ${{ github.event.inputs.prerelease == 'true' }}
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.prerelease == 'true' || false }}
           files: release-assets/AlarmPod-v${{ steps.next_version.outputs.version }}-play-release.apk

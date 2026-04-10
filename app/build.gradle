@@ -17,6 +17,9 @@ android {
         // "1.2.3"          -> 1020395
         versionCode = overriddenVersionCode != null ? overriddenVersionCode.toInteger() : 3110195
         versionName = overriddenVersionName != null ? overriddenVersionName.toString() : "3.11.1"
+        buildConfigField "boolean", "FORK_UPDATES_ENABLED", "true"
+        buildConfigField "String", "FORK_RELEASES_API_URL", '"https://api.github.com/repos/yidaki53/AlarmPod/releases/latest"'
+        buildConfigField "String", "FORK_RELEASES_PAGE_URL", '"https://github.com/yidaki53/AlarmPod/releases/latest"'
 
         javaCompileOptions {
             annotationProcessorOptions {

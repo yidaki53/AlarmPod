@@ -169,7 +169,7 @@ def bump_from_commit_message(subject: str, body: str) -> str:
 
 
 def strongest_bump(bumps: list[str], default_bump: str) -> str:
-    highest = default_bump if default_bump in BUMP_ORDER else "patch"
+    highest = default_bump if default_bump in BUMP_ORDER else "none"
     for bump in bumps:
         if BUMP_ORDER[bump] > BUMP_ORDER[highest]:
             highest = bump
@@ -200,7 +200,7 @@ def main() -> None:
 
     bumps: list[str] = []
     for commit in commits:
-        labels = pr_labels_for_commit(repository, commit["sha"]) if repository and base_tag is not None else []
+        labels = pr_labels_for_commit(repository, commit["sha"]) if repository else []
         label_bump = bump_from_labels(labels)
         if label_bump != "none":
             bumps.append(label_bump)
@@ -208,12 +208,18 @@ def main() -> None:
         bumps.append(bump_from_commit_message(commit["subject"], commit["body"]))
 
     release_bump = strongest_bump(bumps, default_bump)
+    should_release = release_bump != "none"
+
+    write_output("base_tag", base_tag or "")
+    write_output("bump", release_bump)
+    write_output("should_release", str(should_release).lower())
+    if not should_release:
+        return
+
     next_version = bump_version(base_version, release_bump)
     version_string = format_version(next_version)
     version_code = stable_version_code(next_version)
 
-    write_output("base_tag", base_tag or "")
-    write_output("bump", release_bump)
     write_output("version", version_string)
     write_output("version_code", str(version_code))
 
