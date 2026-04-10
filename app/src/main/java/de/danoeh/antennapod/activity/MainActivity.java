@@ -85,6 +85,7 @@ import de.danoeh.antennapod.ui.screen.queue.QueueFragment;
 import de.danoeh.antennapod.ui.screen.rating.RatingDialogManager;
 import de.danoeh.antennapod.ui.screen.subscriptions.SubscriptionFragment;
 import de.danoeh.antennapod.ui.statistics.StatisticsFragment;
+import de.danoeh.antennapod.update.ForkReleaseChecker;
 import de.danoeh.antennapod.ui.view.BottomSheetBackPressedCallback;
 import de.danoeh.antennapod.ui.view.LockableBottomSheetBehavior;
 import org.apache.commons.lang3.ArrayUtils;
@@ -227,6 +228,7 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
         if (PodcastAlarmPreferences.isEnabled()) {
             PodcastAlarmScheduler.schedule(this);
         }
+        ForkReleaseChecker.maybeCheckForUpdates(this);
 
         WorkManager.getInstance(this)
                 .getWorkInfosByTagLiveData(FeedUpdateManagerImpl.WORK_TAG_FEED_UPDATE)

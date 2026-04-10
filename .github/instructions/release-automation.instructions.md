@@ -30,3 +30,8 @@ applyTo: ".github/workflows/**/*.yml,app/build.gradle,scripts/compute_next_relea
 ## Validation expectations
 - After changing release automation, validate both `:app:assembleDebug` and a `PlayRelease` build with explicit version override properties.
 - Keep workflow logic maintainable: put nontrivial version computation in scripts rather than inline shell in YAML.
+
+## Fork update checks in the app
+- The fork can check GitHub releases for updates automatically at app startup.
+- Keep the update check fork-specific by using BuildConfig release URLs rather than hardcoding upstream AntennaPod endpoints into UI code.
+- The automatic check should be lightweight, network-aware, and rate-limited so it does not show repeated prompts on every launch.
