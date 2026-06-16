@@ -1,0 +1,1 @@
+Initial release of AlarmPod - a fork of AntennaPod with podcast alarm clock features. Wake up to your favorite podcasts, with smart prefetch and reliable scheduling.

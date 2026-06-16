@@ -10,12 +10,11 @@ permissions:
 
 jobs:
   sync-upstream:
-    name: Merge upstream into fork branches
+    name: Merge upstream develop into master
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
       upstream_merged: ${{ steps.merge.outputs.merged }}
-      upstream_merged_branch: ${{ steps.merge.outputs.merged_branch }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -29,23 +28,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch upstream and merge into master
+      - name: Fetch upstream develop and merge into master
         id: merge
         run: |
-          git fetch upstream
-          MERGE_BASE=$(git merge-base HEAD upstream/master 2>/dev/null || echo "")
+          git fetch upstream develop
+          MERGE_BASE=$(git merge-base HEAD upstream/develop 2>/dev/null || echo "")
           if [ -z "$MERGE_BASE" ]; then
-            echo "Cannot find common ancestor with upstream/master"
+            echo "Cannot find common ancestor with upstream/develop"
             echo "merged=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          UPSTREAM_SHA=$(git rev-parse upstream/master)
+          UPSTREAM_SHA=$(git rev-parse upstream/develop)
           if [ "$MERGE_BASE" = "$UPSTREAM_SHA" ]; then
-            echo "Already up to date with upstream/master"
+            echo "Already up to date with upstream/develop"
             echo "merged=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git merge upstream/master --no-edit -m "chore: sync upstream master"
+          git merge upstream/develop --no-edit -m "chore: sync upstream develop into master"
           if [ $? -ne 0 ]; then
             echo "Merge conflict detected. Aborting."
             git merge --abort
@@ -53,29 +52,6 @@ jobs:
           else
             git push origin master
             echo "merged=true" >> "$GITHUB_OUTPUT"
-            echo "merged_branch=master" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Fetch upstream and merge into develop
-        run: |
-          git fetch upstream
-          git checkout origin/develop -b develop 2>/dev/null || git checkout develop
-          MERGE_BASE=$(git merge-base HEAD upstream/develop 2>/dev/null || echo "")
-          if [ -z "$MERGE_BASE" ]; then
-            echo "Cannot find common ancestor with upstream/develop"
-            exit 0
-          fi
-          UPSTREAM_SHA=$(git rev-parse upstream/develop)
-          if [ "$MERGE_BASE" = "$UPSTREAM_SHA" ]; then
-            echo "Already up to date with upstream/develop"
-            exit 0
-          fi
-          git merge upstream/develop --no-edit -m "chore: sync upstream develop"
-          if [ $? -ne 0 ]; then
-            echo "Merge conflict detected. Aborting."
-            git merge --abort
-          else
-            git push origin develop
           fi
 
   release:

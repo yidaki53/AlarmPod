@@ -1,0 +1,14 @@
+AlarmPod is a fork of AntennaPod that adds a powerful podcast alarm clock feature on top of the full AntennaPod podcast management experience.
+
+**Podcast Alarm Clock**
+Wake up to your favorite podcast! AlarmPod lets you set a daily alarm that plays an episode from a podcast feed of your choice. The app automatically resolves the latest unplayed episode, downloads it before the alarm goes off, and starts playback at the scheduled time.
+
+Key features:
+- **Podcast alarm clock** – Set any podcast as your wake-up sound. The alarm picks the latest unplayed episode automatically.
+- **Smart prefetch** – AlarmPod can download the episode ahead of time, so it's ready to play when the alarm triggers, even without an internet connection.
+- **Exact alarm scheduling** – Wakes the device reliably at the configured time using Android's exact alarm APIs.
+- **Boot resilience** – Alarms are automatically rescheduled after a device reboot.
+- **Fallback alarm** – If the podcast episode cannot be resolved or played, a standard system alarm ringtone plays as a fallback.
+- **Flexible download timing** – Configure the download to happen at a specific time or a set number of minutes before playback.
+- **Full podcast manager** – Subscribe to feeds, stream or download episodes, manage your queue, set playback speed, sleep timer, and more.
+- **Open source** – Built on the AntennaPod codebase, fully open source with no ads or trackers.
