@@ -152,7 +152,7 @@
     <string name="show_feed_settings_label">Prikaži nastavitve poddaje</string>
     <string name="feed_settings_label">Nastavitve poddaje</string>
     <string name="rename_feed_label">Preimenuj poddajo</string>
-    <string name="remove_feed_label">Odstrani poddajo</string>
+    <string name="remove_feed_label">Izbriši</string>
     <string name="share_label">Deli</string>
     <string name="share_file_label">Deli datoteko</string>
     <string name="load_complete_feed">Osveži poddajo v celoti</string>
@@ -270,7 +270,6 @@
     <string name="random">Naključno</string>
     <string name="smart_shuffle">Pametno mešanje</string>
     <string name="size">Velikost</string>
-    <string name="time_left_label">"Preostali čas: "</string>
     <!--Variable Speed-->
   <string name="speed_presets">Prednastavitve</string>
     <string name="preset_already_exists">%1$.2fx je že shranjeno kot prednastavitev.</string>
@@ -527,8 +526,6 @@
     <!--Directory chooser-->
   <string name="choose_data_directory">Izberite podatkovno mapo</string>
     <string name="choose_data_directory_available_space">%1$s od %2$s prostega</string>
-    <string name="pref_pausePlaybackForFocusLoss_sum">Začasno ustavite predvajanje, namesto da zmanjšate glasnost, ko želi druga aplikacija predvajati zvoke</string>
-    <string name="pref_pausePlaybackForFocusLoss_title">Premor med prekinitvami</string>
     <!--Online feed view-->
   <string name="subscribe_label">Naročite se</string>
     <!--Content descriptions for image buttons-->
@@ -645,7 +642,6 @@
     <string name="shortcut_subscription_label">Bližnica do naročnine</string>
     <string name="shortcut_select_subscription">Izberi naročnino</string>
     <string name="add_shortcut">Dodaj bližnjico</string>
-    <string name="queue_label_more">Čakalna vrsta »</string>
     <string name="delete_tag_label">Izbriši oznako</string>
     <string name="statistics_expected_next_episode_unknown">Neznano</string>
     <string name="feed_new_episodes_action_summary_autodownload">Avtomatski prenosi omogočeni. Epizode bodo dodane v nabiralnik in po prenosu premaknjene v čakalno vrsto.</string>
@@ -736,10 +732,6 @@
     <string name="subscriptions_label_short">Naročnine</string>
     <string name="playback_history_label_short">Zgodovina</string>
     <string name="section_hidden">Skrito</string>
-    <string name="episodes_label_more">Epizode »</string>
-    <string name="inbox_label_more">Nabiralnik »</string>
-    <string name="downloads_label_more">Prenosi »</string>
-    <string name="subscriptions_label_more">Naročnine »</string>
     <string name="go_to_position_label">Pojdi na to točko</string>
     <string name="enabled">Omogočeno</string>
     <string name="disabled">Onemogočeno</string>
@@ -806,4 +798,17 @@
     <string name="general_collapse_button">Strni</string>
     <string name="archiving_podcast_progress">Arhiviranje poddaje %1$d od %2$d…</string>
     <string name="deleting_podcast_progress">Brisanje poddaje %1$d od %2$d…</string>
+    <string name="feed_delete_explanation_delete">Brisanje odstrani naročnino vključno z epizodami, prenosi, zgovodino predvajanj in statistiko.</string>
+    <string name="feed_delete_explanation_archive">Arhiviranje skrije naročnino iz seznama in preneha slediti novim epizodam. Prenosi, statistika in predvajanje se ne spremeni.</string>
+    <string name="multi_select_started_talkback">Možnost izbire večih elementov je prikazana na dnu</string>
+    <string name="please_wait_before_refreshing">Prosim počakajte trenutek preden ponovno osvežite poddajo.</string>
+    <string name="delete_downloads_played_confirmation">Prosim potrdite, da želite izbrisati vse predvajane prenose.</string>
+    <string name="play_this_to_seek_position_message">Da preskočiš na položaj, moraš predvajati epizodo</string>
+    <string name="reset_playback_position_label">Ponastavi pozicijo predvajanja</string>
+    <string name="no_items_selected_message">Noben predmet izbran</string>
+    <string name="delete_local_feed_confirmation_dialog_message">Brisanje odstrani epizodo iz AntennaPod in izbriše medijske datoteke iz vaše naprave. Le-ta več no more biti prenesena preko AntennaPod.</string>
+    <string name="download_log_details_human_readable_reason_title">Stanje</string>
+    <string name="download_log_details_technical_reason_title">Tehnične podrobnosti</string>
+    <string name="download_log_details_file_url_title">URL datoteke</string>
+    <string name="download_log_open_feed">Odpri</string>
 </resources>

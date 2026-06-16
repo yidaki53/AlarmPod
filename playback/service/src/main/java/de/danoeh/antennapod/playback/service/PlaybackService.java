@@ -1210,7 +1210,8 @@ public class PlaybackService extends MediaBrowserServiceCompat {
                     || (skipped && !UserPreferences.shouldSkipKeepEpisode())) {
                 // only mark the item as played if we're not keeping it anyways
                 positionJustResetAfterPlayback = item.getIdentifyingValue();
-                DBWriter.markItemPlayed(FeedItem.PLAYED, ended || (skipped && almostEnded), item);
+                DBWriter.markItemsPlayed(FeedItem.PLAYED, ended || (skipped && almostEnded),
+                        Collections.singletonList(item));
                 // don't know if it actually matters to not autodownload when smart mark as played is triggered
                 DBWriter.removeQueueItem(PlaybackService.this, ended, item);
                 // Delete episode if enabled
@@ -1912,7 +1913,7 @@ public class PlaybackService extends MediaBrowserServiceCompat {
                 return;
             }
 
-            List<FeedItem> results = DBReader.searchFeedItems(0, query, Feed.STATE_SUBSCRIBED);
+            List<FeedItem> results = DBReader.searchFeedItems(0, query, FeedItemFilter.unfiltered());
             if (results.size() > 0 && results.get(0).getMedia() != null) {
                 FeedMedia media = results.get(0).getMedia();
                 startPlaying(media, false);

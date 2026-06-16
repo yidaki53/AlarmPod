@@ -397,7 +397,7 @@ public abstract class PlaybackController {
         } else if (playable instanceof FeedMedia) {
             FeedMedia media = (FeedMedia) playable;
             media.setPosition(time);
-            DBWriter.setFeedItem(media.getItem());
+            DBWriter.setFeedItem(media.getItem(), false);
             EventBus.getDefault().post(new PlaybackPositionEvent(time, playable.getDuration()));
         }
     }

@@ -1,0 +1,181 @@
+name: Sync Upstream & Release
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-upstream:
+    name: Merge upstream into fork branches
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      upstream_merged: ${{ steps.merge.outputs.merged }}
+      upstream_merged_branch: ${{ steps.merge.outputs.merged_branch }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add upstream remote and configure git
+        run: |
+          git remote add upstream https://github.com/AntennaPod/AntennaPod.git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream and merge into master
+        id: merge
+        run: |
+          git fetch upstream
+          MERGE_BASE=$(git merge-base HEAD upstream/master 2>/dev/null || echo "")
+          if [ -z "$MERGE_BASE" ]; then
+            echo "Cannot find common ancestor with upstream/master"
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          UPSTREAM_SHA=$(git rev-parse upstream/master)
+          if [ "$MERGE_BASE" = "$UPSTREAM_SHA" ]; then
+            echo "Already up to date with upstream/master"
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git merge upstream/master --no-edit -m "chore: sync upstream master"
+          if [ $? -ne 0 ]; then
+            echo "Merge conflict detected. Aborting."
+            git merge --abort
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+          else
+            git push origin master
+            echo "merged=true" >> "$GITHUB_OUTPUT"
+            echo "merged_branch=master" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch upstream and merge into develop
+        run: |
+          git fetch upstream
+          git checkout origin/develop -b develop 2>/dev/null || git checkout develop
+          MERGE_BASE=$(git merge-base HEAD upstream/develop 2>/dev/null || echo "")
+          if [ -z "$MERGE_BASE" ]; then
+            echo "Cannot find common ancestor with upstream/develop"
+            exit 0
+          fi
+          UPSTREAM_SHA=$(git rev-parse upstream/develop)
+          if [ "$MERGE_BASE" = "$UPSTREAM_SHA" ]; then
+            echo "Already up to date with upstream/develop"
+            exit 0
+          fi
+          git merge upstream/develop --no-edit -m "chore: sync upstream develop"
+          if [ $? -ne 0 ]; then
+            echo "Merge conflict detected. Aborting."
+            git merge --abort
+          else
+            git push origin develop
+          fi
+
+  release:
+    name: Compute version and publish release APK
+    needs: sync-upstream
+    if: needs.sync-upstream.outputs.upstream_merged == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Compute next release version
+        id: next_version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DEFAULT_BUMP: patch
+        run: python scripts/compute_next_release.py
+
+      - name: Skip non-release push
+        if: steps.next_version.outputs.should_release != 'true'
+        run: echo "No feature/fix/breaking-change bump detected; skipping release."
+
+      - name: Cache Gradle
+        if: steps.next_version.outputs.should_release == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Configure parallel build
+        if: steps.next_version.outputs.should_release == 'true'
+        run: echo "org.gradle.parallel=true" >> local.properties
+
+      - name: Create temporary release keystore
+        if: steps.next_version.outputs.should_release == 'true'
+        run: keytool -noprompt -genkey -v -keystore "app/keystore" -alias alias -storepass password -keypass password -keyalg RSA -validity 10 -dname "CN=antennapod.org, OU=dummy, O=dummy, L=dummy, S=dummy, C=US"
+
+      - name: Build versioned PlayRelease APK
+        if: steps.next_version.outputs.should_release == 'true'
+        run: ./gradlew -PversionNameOverride=${{ steps.next_version.outputs.version }} -PversionCodeOverride=${{ steps.next_version.outputs.version_code }} assemblePlayRelease
+
+      - name: Build versioned FreeRelease APK
+        if: steps.next_version.outputs.should_release == 'true'
+        run: ./gradlew -PversionNameOverride=${{ steps.next_version.outputs.version }} -PversionCodeOverride=${{ steps.next_version.outputs.version_code }} assembleFreeRelease
+
+      - name: Prepare release assets
+        if: steps.next_version.outputs.should_release == 'true'
+        run: |
+          mkdir -p release-assets
+          cp app/build/outputs/apk/play/release/app-play-release.apk "release-assets/AlarmPod-v${{ steps.next_version.outputs.version }}-play-release.apk"
+          cp app/build/outputs/apk/free/release/app-free-release.apk "release-assets/AlarmPod-v${{ steps.next_version.outputs.version }}-free-release.apk"
+
+      - name: Upload release artifact
+        if: steps.next_version.outputs.should_release == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk-v${{ steps.next_version.outputs.version }}
+          path: release-assets/AlarmPod-v${{ steps.next_version.outputs.version }}-*-release.apk
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        if: steps.next_version.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.next_version.outputs.version }}
+          target_commitish: master
+          name: AlarmPod v${{ steps.next_version.outputs.version }}
+          generate_release_notes: true
+          files: |
+            release-assets/AlarmPod-v${{ steps.next_version.outputs.version }}-play-release.apk
+            release-assets/AlarmPod-v${{ steps.next_version.outputs.version }}-free-release.apk
+
+      - name: Configure git for tag push
+        if: steps.next_version.outputs.should_release == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit version bump
+        if: steps.next_version.outputs.should_release == 'true'
+        run: |
+          git checkout master
+          git add app/build.gradle
+          git commit -m "chore: bump version to ${{ steps.next_version.outputs.version }}" || echo "No version file changes to commit"
+          git push origin master

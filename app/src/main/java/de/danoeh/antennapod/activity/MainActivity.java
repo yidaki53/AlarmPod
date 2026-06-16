@@ -52,7 +52,6 @@ import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.playback.cast.CastEnabledActivity;
 import de.danoeh.antennapod.playback.service.PlaybackController;
-import de.danoeh.antennapod.playback.service.PlaybackServiceInterface;
 import de.danoeh.antennapod.storage.databasemaintenanceservice.DatabaseMaintenanceWorker;
 import de.danoeh.antennapod.storage.importexport.AutomaticDatabaseExportWorker;
 import de.danoeh.antennapod.storage.preferences.PodcastAlarmPreferences;
@@ -61,7 +60,6 @@ import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.TransitionEffect;
 import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
 import de.danoeh.antennapod.ui.appstartintent.MediaButtonStarter;
-import de.danoeh.antennapod.ui.common.IntentUtils;
 import de.danoeh.antennapod.ui.common.NavigationToolbarActivity;
 import de.danoeh.antennapod.ui.common.ThemeSwitcher;
 import de.danoeh.antennapod.ui.common.ThemeUtils;
@@ -77,6 +75,7 @@ import de.danoeh.antennapod.ui.screen.download.DownloadLogFragment;
 import de.danoeh.antennapod.ui.screen.drawer.BottomNavigation;
 import de.danoeh.antennapod.ui.screen.drawer.NavDrawerFragment;
 import de.danoeh.antennapod.ui.screen.drawer.NavigationNames;
+import de.danoeh.antennapod.ui.screen.episode.ItemPagerFragment;
 import de.danoeh.antennapod.ui.screen.feed.FeedItemlistFragment;
 import de.danoeh.antennapod.ui.screen.home.HomeFragment;
 import de.danoeh.antennapod.ui.screen.playback.audio.AudioPlayerFragment;
@@ -318,8 +317,10 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
                 onSlide(view, 1.0f);
                 bottomSheetBackPressedCallback.setEnabled(true);
             } else if (state == BottomSheetBehavior.STATE_HIDDEN) {
-                IntentUtils.sendLocalBroadcast(MainActivity.this,
-                        PlaybackServiceInterface.ACTION_SHUTDOWN_PLAYBACK_SERVICE);
+                PlaybackController.bindToMedia3Service(MainActivity.this, controller -> {
+                    controller.clearMediaItems();
+                    controller.stop();
+                });
                 PlaybackPreferences.writeNoMediaPlaying();
                 setPlayerVisible(false);
                 bottomSheetBackPressedCallback.setEnabled(false);
@@ -741,7 +742,14 @@ public class MainActivity extends CastEnabledActivity implements NavigationToolb
     private void handleNavIntent() {
         Log.d(TAG, "handleNavIntent()");
         Intent intent = getIntent();
-        if (intent.hasExtra(MainActivityStarter.EXTRA_FEED_ID)) {
+        if (intent.hasExtra(MainActivityStarter.EXTRA_EPISODE_ID)) {
+            long episodeId = intent.getLongExtra(MainActivityStarter.EXTRA_EPISODE_ID, 0);
+            if (episodeId <= 0) {
+                return;
+            }
+            loadChildFragment(ItemPagerFragment.newInstance(episodeId));
+            sheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        } else if (intent.hasExtra(MainActivityStarter.EXTRA_FEED_ID)) {
             long feedId = intent.getLongExtra(MainActivityStarter.EXTRA_FEED_ID, 0);
             Bundle args = intent.getBundleExtra(MainActivityStarter.EXTRA_FRAGMENT_ARGS);
             if (feedId > 0) {
